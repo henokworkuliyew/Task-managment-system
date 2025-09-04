@@ -1,3 +1,4 @@
+// src/entities/user.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -11,6 +12,12 @@ import {
 } from 'typeorm'
 import { Exclude } from 'class-transformer'
 import { UserRole } from '../common/enums'
+import { Project } from './project.entity'
+import { Task } from './task.entity'
+import { Issue } from './issue.entity'
+import { Comment } from './comment.entity'
+import { NotificationLog } from './notification-log.entity'
+import { TimeLog } from './time-log.entity'
 
 @Entity('users')
 @Index(['email'], { unique: true })
@@ -72,26 +79,26 @@ export class User {
   updatedAt: Date
 
   // Relations
-  @OneToMany('Project', 'owner')
-  ownedProjects: any[]
+  @OneToMany(() => Project, (project) => project.owner)
+  ownedProjects: Project[]
 
-  @ManyToMany('Project', 'members')
-  projects: any[]
+  @ManyToMany(() => Project, (project) => project.members)
+  projects: Project[]
 
-  @OneToMany('Task', 'assignee')
-  assignedTasks: any[]
+  @OneToMany(() => Task, (task) => task.assignee)
+  assignedTasks: Task[]
 
-  @OneToMany('Issue', 'assignee')
-  assignedIssues: any[]
+  @OneToMany(() => Issue, (issue) => issue.assignee)
+  assignedIssues: Issue[]
 
-  @OneToMany('Comment', 'author')
-  comments: any[]
+  @OneToMany(() => Comment, (comment) => comment.author)
+  comments: Comment[]
 
-  @OneToMany('NotificationLog', 'user')
-  notifications: any[]
+  @OneToMany(() => NotificationLog, (notification) => notification.user)
+  notifications: NotificationLog[]
 
-  @OneToMany('TimeLog', 'user')
-  timeLogs: any[]
+  @OneToMany(() => TimeLog, (timeLog) => timeLog.user)
+  timeLogs: TimeLog[]
 
   @ManyToMany(() => User, (user) => user.teamMembers)
   @JoinTable({
