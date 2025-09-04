@@ -1109,6 +1109,12 @@ exports.User = void 0;
 const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
 const class_transformer_1 = __webpack_require__(/*! class-transformer */ "class-transformer");
 const enums_1 = __webpack_require__(/*! ../common/enums */ "./src/common/enums/index.ts");
+const project_entity_1 = __webpack_require__(/*! ./project.entity */ "./src/entities/project.entity.ts");
+const task_entity_1 = __webpack_require__(/*! ./task.entity */ "./src/entities/task.entity.ts");
+const issue_entity_1 = __webpack_require__(/*! ./issue.entity */ "./src/entities/issue.entity.ts");
+const comment_entity_1 = __webpack_require__(/*! ./comment.entity */ "./src/entities/comment.entity.ts");
+const notification_log_entity_1 = __webpack_require__(/*! ./notification-log.entity */ "./src/entities/notification-log.entity.ts");
+const time_log_entity_1 = __webpack_require__(/*! ./time-log.entity */ "./src/entities/time-log.entity.ts");
 let User = class User {
 };
 exports.User = User;
@@ -1186,31 +1192,31 @@ __decorate([
     __metadata("design:type", typeof (_f = typeof Date !== "undefined" && Date) === "function" ? _f : Object)
 ], User.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)('Project', 'owner'),
+    (0, typeorm_1.OneToMany)(() => project_entity_1.Project, (project) => project.owner),
     __metadata("design:type", Array)
 ], User.prototype, "ownedProjects", void 0);
 __decorate([
-    (0, typeorm_1.ManyToMany)('Project', 'members'),
+    (0, typeorm_1.ManyToMany)(() => project_entity_1.Project, (project) => project.members),
     __metadata("design:type", Array)
 ], User.prototype, "projects", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)('Task', 'assignee'),
+    (0, typeorm_1.OneToMany)(() => task_entity_1.Task, (task) => task.assignee),
     __metadata("design:type", Array)
 ], User.prototype, "assignedTasks", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)('Issue', 'assignee'),
+    (0, typeorm_1.OneToMany)(() => issue_entity_1.Issue, (issue) => issue.assignee),
     __metadata("design:type", Array)
 ], User.prototype, "assignedIssues", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)('Comment', 'author'),
+    (0, typeorm_1.OneToMany)(() => comment_entity_1.Comment, (comment) => comment.author),
     __metadata("design:type", Array)
 ], User.prototype, "comments", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)('NotificationLog', 'user'),
+    (0, typeorm_1.OneToMany)(() => notification_log_entity_1.NotificationLog, (notification) => notification.user),
     __metadata("design:type", Array)
 ], User.prototype, "notifications", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)('TimeLog', 'user'),
+    (0, typeorm_1.OneToMany)(() => time_log_entity_1.TimeLog, (timeLog) => timeLog.user),
     __metadata("design:type", Array)
 ], User.prototype, "timeLogs", void 0);
 __decorate([
