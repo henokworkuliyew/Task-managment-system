@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Patch, Param, Delete, UseGuards, Query, Request } from "@nestjs/common"
+import { Controller, Get, Post, Patch, Param, Delete, UseGuards, Query, Request, Body } from "@nestjs/common"
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger"
-import type { IssuesService } from "./issues.service"
-import type { CreateIssueDto } from "./dto/create-issue.dto"
-import type { UpdateIssueDto } from "./dto/update-issue.dto"
+import { IssuesService } from "./issues.service"
+import { CreateIssueDto } from "./dto/create-issue.dto"
+import { UpdateIssueDto } from "./dto/update-issue.dto"
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
 
 @ApiTags("issues")
@@ -14,7 +14,7 @@ export class IssuesController {
 
   @Post()
   @ApiOperation({ summary: "Create a new issue" })
-  create(createIssueDto: CreateIssueDto, @Request() req) {
+  create(@Body() createIssueDto: CreateIssueDto, @Request() req) {
     return this.issuesService.create(createIssueDto, req.user.id)
   }
 
@@ -31,8 +31,8 @@ export class IssuesController {
   }
 
   @Patch(":id")
-  @ApiOperation({ summary: "Update issue" })
-  update(@Param('id') id: string, updateIssueDto: UpdateIssueDto, @Request() req) {
+  @ApiOperation({ summary: "Update issue by ID" })
+  update(@Param('id') id: string, @Body() updateIssueDto: UpdateIssueDto, @Request() req) {
     return this.issuesService.update(id, updateIssueDto, req.user.id)
   }
 
