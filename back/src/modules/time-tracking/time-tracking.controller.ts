@@ -1,8 +1,8 @@
-import { Controller, Get, Post, UseGuards, Query, Request } from "@nestjs/common"
+import { Controller, Get, Post, UseGuards, Query, Request, Body } from "@nestjs/common"
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger"
-import type { TimeTrackingService } from "./time-tracking.service"
-import type { StartTimeLogDto } from "./dto/start-time-log.dto"
-import type { StopTimeLogDto } from "./dto/stop-time-log.dto"
+import { TimeTrackingService } from "./time-tracking.service"
+import { StartTimeLogDto } from "./dto/start-time-log.dto"
+import { StopTimeLogDto } from "./dto/stop-time-log.dto"
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
 
 @ApiTags("time-tracking")
@@ -14,13 +14,13 @@ export class TimeTrackingController {
 
   @Post("start")
   @ApiOperation({ summary: "Start time tracking for a task" })
-  startTimer(startTimeLogDto: StartTimeLogDto, @Request() req) {
+  startTimer(@Body() startTimeLogDto: StartTimeLogDto, @Request() req) {
     return this.timeTrackingService.startTimer(startTimeLogDto, req.user.id)
   }
 
   @Post("stop")
   @ApiOperation({ summary: "Stop time tracking" })
-  stopTimer(stopTimeLogDto: StopTimeLogDto, @Request() req) {
+  stopTimer(@Body() stopTimeLogDto: StopTimeLogDto, @Request() req) {
     return this.timeTrackingService.stopTimer(stopTimeLogDto, req.user.id)
   }
 
