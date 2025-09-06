@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Patch, Param, Delete, UseGuards, Request } from "@nestjs/common"
+import { Controller, Get, Post, Patch, Param, Delete, UseGuards, Request, Body, Inject } from "@nestjs/common"
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger"
-import type { WebhooksService } from "./webhooks.service"
-import type { CreateWebhookDto } from "./dto/create-webhook.dto"
-import type { UpdateWebhookDto } from "./dto/update-webhook.dto"
+import { WebhooksService } from "./webhooks.service"
+import { CreateWebhookDto } from "./dto/create-webhook.dto"
+import { UpdateWebhookDto } from "./dto/update-webhook.dto"
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
 
 @ApiTags("webhooks")
@@ -10,11 +10,13 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class WebhooksController {
-  constructor(private readonly webhooksService: WebhooksService) {}
+  constructor(
+    @Inject(WebhooksService) private readonly webhooksService: WebhooksService
+  ) {}
 
   @Post()
   @ApiOperation({ summary: "Create a new webhook" })
-  create(createWebhookDto: CreateWebhookDto, @Request() req) {
+  create(@Body() createWebhookDto: CreateWebhookDto, @Request() req) {
     return this.webhooksService.create(createWebhookDto, req.user.id)
   }
 
@@ -32,7 +34,7 @@ export class WebhooksController {
 
   @Patch(":id")
   @ApiOperation({ summary: "Update webhook" })
-  update(@Param('id') id: string, updateWebhookDto: UpdateWebhookDto, @Request() req) {
+  update(@Param('id') id: string, @Body() updateWebhookDto: UpdateWebhookDto, @Request() req) {
     return this.webhooksService.update(id, updateWebhookDto, req.user.id)
   }
 
