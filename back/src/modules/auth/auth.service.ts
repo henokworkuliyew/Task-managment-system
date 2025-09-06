@@ -3,35 +3,31 @@ import {
   UnauthorizedException,
   BadRequestException,
   ConflictException,
+  Inject,
+  Optional,
 } from '@nestjs/common'
-import type { JwtService } from '@nestjs/jwt'
-import type { Repository } from 'typeorm'
-import type { ConfigService } from '@nestjs/config'
-import type { Queue } from 'bull'
+import { JwtService } from '@nestjs/jwt'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { ConfigService } from '@nestjs/config'
+import { InjectQueue } from '@nestjs/bull'
+import { Queue } from 'bull'
 import * as bcrypt from 'bcrypt'
 import * as crypto from 'crypto'
-import type { User } from '../../entities/user.entity' // Changed from type import to regular import for decorator usage
+import { User } from '../../entities/user.entity' // Changed from type import to regular import for decorator usage
 import type { RegisterDto } from './dtos/register.dto'
 import type { LoginDto } from './dtos/login.dto'
+import { EmailService } from './email.service'
 
 @Injectable()
 export class AuthService {
-  private readonly userRepository: Repository<User>
-  private readonly jwtService: JwtService
-  private readonly configService: ConfigService
-  private readonly emailQueue: Queue
-
   constructor(
-    userRepository: Repository<User>,
-    jwtService: JwtService,
-    configService: ConfigService,
-    emailQueue: Queue
-  ) {
-    this.userRepository = userRepository
-    this.jwtService = jwtService
-    this.configService = configService
-    this.emailQueue = emailQueue
-  }
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly emailService: EmailService
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const { email, password, name } = registerDto
@@ -64,10 +60,19 @@ export class AuthService {
     await this.updateRefreshToken(savedUser.id, tokens.refreshToken)
 
     // Send welcome email
-    await this.emailQueue.add('welcome', {
-      email: savedUser.email,
-      name: savedUser.name,
-    })
+    try {
+      if (this.emailService) {
+        await this.emailService.add('welcome', {
+          email: savedUser.email,
+          name: savedUser.name,
+        });
+      } else {
+        console.log(`Mock email would be sent to ${savedUser.email} with type: welcome`);
+      }
+    } catch (error) {
+      // Log the error but don't fail the registration process
+      console.error('Failed to send welcome email:', error.message);
+    }
 
     return {
       user: this.sanitizeUser(savedUser),
@@ -125,7 +130,7 @@ export class AuthService {
     })
 
     // Send reset email
-    await this.emailQueue.add('password-reset', {
+    await this.emailService.add('password-reset', {
       email: user.email,
       name: user.name,
       resetToken,
@@ -177,7 +182,7 @@ export class AuthService {
     })
 
     // Send OTP email
-    await this.emailQueue.add('otp', {
+    await this.emailService.add('otp', {
       email: user.email,
       name: user.name,
       otp,
