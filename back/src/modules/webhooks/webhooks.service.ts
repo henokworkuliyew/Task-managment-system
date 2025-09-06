@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import type { Repository } from 'typeorm'
-import type { Webhook } from '../../entities/webhook.entity' // Changed from type import to regular import for decorator usage
+import { Webhook } from '../../entities/webhook.entity' // Changed from type import to regular import for decorator usage
 import type { CreateWebhookDto } from './dto/create-webhook.dto'
 import type { UpdateWebhookDto } from './dto/update-webhook.dto'
 
 @Injectable()
 export class WebhooksService {
   constructor(
-    private readonly webhookRepository: Repository<Webhook> // Removed @InjectRepository decorator
+    @InjectRepository(Webhook)
+    private readonly webhookRepository: Repository<Webhook>
   ) {}
 
   async create(
