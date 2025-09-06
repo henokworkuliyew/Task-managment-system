@@ -10,6 +10,7 @@ import { AuthService } from "./auth.service"
 import { JwtStrategy } from "./strategies/jwt.strategy"
 import { User } from "../../entities/user.entity"
 import { UsersModule } from "../users/users.module"
+import { EmailService } from "./email.service"
 
 @Module({
   imports: [
@@ -25,13 +26,16 @@ import { UsersModule } from "../users/users.module"
       }),
       inject: [ConfigService],
     }),
-    BullModule.registerQueue({
-      name: "email",
-    }),
+    // Conditionally register BullModule queue only when Redis is available
+    ConfigModule,
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService, 
+    JwtStrategy,
+    EmailService
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}
