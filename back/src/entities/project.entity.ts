@@ -9,39 +9,39 @@ import {
   ManyToMany,
   JoinTable,
   Index,
-} from "typeorm"
-import { Priority } from "../common/enums"
-import { User } from "./user.entity"
-import { Task } from "./task.entity"
-import { Issue } from "./issue.entity"
-import { Comment } from "./comment.entity"
+} from 'typeorm'
+import { Priority } from '../common/enums'
+import { User } from './user.entity'
+import { Task } from './task.entity'
+import { Issue } from './issue.entity'
+import { Comment } from './comment.entity'
 
-@Entity("projects")
-@Index(["owner"])
+@Entity('projects')
+@Index(['owner'])
 export class Project {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string
 
   @Column()
   name: string
 
-  @Column({ type: "text", nullable: true })
+  @Column({ type: 'text', nullable: true })
   description: string
 
-  @Column({ type: "date", nullable: true })
+  @Column({ type: 'date', nullable: true })
   startDate: Date
 
-  @Column({ type: "date", nullable: true })
+  @Column({ type: 'date', nullable: true })
   endDate: Date
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: Priority,
     default: Priority.MEDIUM,
   })
   priority: Priority
 
-  @Column("simple-array", { nullable: true })
+  @Column('simple-array', { nullable: true })
   tags: string[]
 
   @Column({ default: 0 })
@@ -55,43 +55,27 @@ export class Project {
 
   @UpdateDateColumn()
   updatedAt: Date
-
-  // Relations
-  @ManyToOne(
-    () => User,
-    (user) => user.ownedProjects,
-  )
+ 
+  @ManyToOne(() => User, (user) => user.ownedProjects)
   owner: User
 
   @Column()
   ownerId: string
 
-  @ManyToMany(
-    () => User,
-    (user) => user.projects,
-  )
+  @ManyToMany(() => User, (user) => user.projects)
   @JoinTable({
-    name: "project_members",
-    joinColumn: { name: "projectId", referencedColumnName: "id" },
-    inverseJoinColumn: { name: "userId", referencedColumnName: "id" },
+    name: 'project_members',
+    joinColumn: { name: 'projectId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'userId', referencedColumnName: 'id' },
   })
   members: User[]
 
-  @OneToMany(
-    () => Task,
-    (task) => task.project,
-  )
+  @OneToMany(() => Task, (task) => task.project)
   tasks: Task[]
 
-  @OneToMany(
-    () => Issue,
-    (issue) => issue.project,
-  )
+  @OneToMany(() => Issue, (issue) => issue.project)
   issues: Issue[]
 
-  @OneToMany(
-    () => Comment,
-    (comment) => comment.project,
-  )
+  @OneToMany(() => Comment, (comment) => comment.project)
   comments: Comment[]
 }
