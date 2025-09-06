@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Patch, Param, Delete, UseGuards, Query, Request } from "@nestjs/common"
+import { Controller, Get, Post, Patch, Param, Delete, UseGuards, Query, Request, Body } from "@nestjs/common"
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger"
-import type { ProjectsService } from "./projects.service"
-import type { CreateProjectDto } from "./dto/create-project.dto"
-import type { UpdateProjectDto } from "./dto/update-project.dto"
+import { ProjectsService } from "./projects.service"
+import { CreateProjectDto } from "./dto/create-project.dto"
+import { UpdateProjectDto } from "./dto/update-project.dto"
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
-import type { PaginationDto } from "../../common/dtos/pagination.dto"
+import { PaginationDto } from "../../common/dtos/pagination.dto"
 
 @ApiTags("projects")
 @Controller("projects")
@@ -15,7 +15,7 @@ export class ProjectsController {
 
   @Post()
   @ApiOperation({ summary: "Create a new project" })
-  create(createProjectDto: CreateProjectDto, @Request() req) {
+  create(@Body() createProjectDto: CreateProjectDto, @Request() req) {
     return this.projectsService.create(createProjectDto, req.user.id)
   }
 
@@ -32,8 +32,8 @@ export class ProjectsController {
   }
 
   @Patch(":id")
-  @ApiOperation({ summary: "Update project" })
-  update(@Param('id') id: string, updateProjectDto: UpdateProjectDto, @Request() req) {
+  @ApiOperation({ summary: "Update project by ID" })
+  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto, @Request() req) {
     return this.projectsService.update(id, updateProjectDto, req.user.id)
   }
 
