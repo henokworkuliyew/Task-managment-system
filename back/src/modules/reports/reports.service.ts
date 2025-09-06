@@ -1,26 +1,22 @@
 import { Injectable } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import type { Repository } from 'typeorm'
 import type { Response } from 'express'
-import type { Task } from '../../entities/task.entity' // Changed from type import to regular import for decorator usage
-import type { Project } from '../../entities/project.entity' // Changed from type import to regular import for decorator usage
-import type { TimeLog } from '../../entities/time-log.entity' // Changed from type import to regular import for decorator usage
+import { Task } from '../../entities/task.entity' // Changed from type import to regular import for decorator usage
+import { Project } from '../../entities/project.entity' // Changed from type import to regular import for decorator usage
+import { TimeLog } from '../../entities/time-log.entity' // Changed from type import to regular import for decorator usage
 import { TaskStatus } from '../../common/enums'
 
 @Injectable()
 export class ReportsService {
-  private readonly taskRepository: Repository<Task>
-  private readonly projectRepository: Repository<Project>
-  private readonly timeLogRepository: Repository<TimeLog>
-
   constructor(
-    taskRepository: Repository<Task>,
-    projectRepository: Repository<Project>,
-    timeLogRepository: Repository<TimeLog>
-  ) {
-    this.taskRepository = taskRepository
-    this.projectRepository = projectRepository
-    this.timeLogRepository = timeLogRepository
-  }
+    @InjectRepository(Task)
+    private readonly taskRepository: Repository<Task>,
+    @InjectRepository(Project)
+    private readonly projectRepository: Repository<Project>,
+    @InjectRepository(TimeLog)
+    private readonly timeLogRepository: Repository<TimeLog>
+  ) {}
 
   async getBurndownChart(projectId: string, userId: string) {
     const project = await this.projectRepository.findOne({
