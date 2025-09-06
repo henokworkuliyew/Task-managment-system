@@ -1,13 +1,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import type { Repository } from 'typeorm'
-import type { TimeLog } from '../../entities/time-log.entity' // Changed from type import to regular import for decorator usage
+import { TimeLog } from '../../entities/time-log.entity' // Changed from type import to regular import for decorator usage
 import type { StartTimeLogDto } from './dto/start-time-log.dto'
 import type { StopTimeLogDto } from './dto/stop-time-log.dto'
 
 @Injectable()
 export class TimeTrackingService {
   constructor(
-    private readonly timeLogRepository: Repository<TimeLog> // Removed @InjectRepository decorator
+    @InjectRepository(TimeLog)
+    private readonly timeLogRepository: Repository<TimeLog>
   ) {}
 
   async startTimer(
