@@ -3,15 +3,19 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import type { Repository } from 'typeorm'
-import type { Project } from '../../entities/project.entity' // Changed from type import to regular import for decorator usage
+import { Project } from '../../entities/project.entity'
 import type { CreateProjectDto } from './dto/create-project.dto'
 import type { UpdateProjectDto } from './dto/update-project.dto'
 import type { PaginationDto } from '../../common/dtos/pagination.dto'
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly projectRepository: Repository<Project>) {}
+  constructor(
+    @InjectRepository(Project)
+    private readonly projectRepository: Repository<Project>
+  ) {}
 
   async create(
     createProjectDto: CreateProjectDto,
@@ -56,7 +60,6 @@ export class ProjectsService {
       throw new NotFoundException(`Project with ID ${id} not found`)
     }
 
-    // Check if user has access to this project
     const hasAccess =
       project.owner.id === userId ||
       project.members?.some((member) => member.id === userId)
@@ -75,7 +78,6 @@ export class ProjectsService {
   ): Promise<Project> {
     const project = await this.findOne(id, userId)
 
-    // Only owner can update project
     if (project.owner.id !== userId) {
       throw new ForbiddenException('Only project owner can update the project')
     }
@@ -87,7 +89,6 @@ export class ProjectsService {
   async remove(id: string, userId: string): Promise<void> {
     const project = await this.findOne(id, userId)
 
-    // Only owner can delete project
     if (project.owner.id !== userId) {
       throw new ForbiddenException('Only project owner can delete the project')
     }
