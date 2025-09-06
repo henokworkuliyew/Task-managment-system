@@ -1,15 +1,14 @@
-import { Controller, Get, Post, Patch, Param, Delete, UseGuards } from "@nestjs/common"
+import { Controller, Get, Post, Patch, Param, Delete, UseGuards, Body, Query } from "@nestjs/common"
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger"
-import type { UsersService } from "./users.service"
-import type { CreateUserDto } from "./dto/create-user.dto"
-import type { UpdateUserDto } from "./dto/update-user.dto"
+import { UsersService } from "./users.service"
+import { CreateUserDto } from "./dto/create-user.dto"
+import { UpdateUserDto } from "./dto/update-user.dto"
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
-// import { RolesGuard } from "../auth/guards/roles.guard"
+import { RolesGuard } from "../../common/guards/roles.guard"
 
 import { Roles } from "../auth/decorators/roles.decorator"
 import { UserRole } from "../../common/enums"
-import type { PaginationDto } from "../../common/dtos/pagination.dto"
-import { RolesGuard } from "../auth/guards/roles.guard"
+import { PaginationDto } from "../../common/dtos/pagination.dto"
 
 @ApiTags("users")
 @Controller("users")
