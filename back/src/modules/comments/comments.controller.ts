@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Patch, Param, Delete, UseGuards, Query, Request } from "@nestjs/common"
+import { Controller, Get, Post, Patch, Param, Delete, UseGuards, Query, Request, Body } from "@nestjs/common"
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger"
-import type { CommentsService } from "./comments.service"
-import type { CreateCommentDto } from "./dto/create-comment.dto"
-import type { UpdateCommentDto } from "./dto/update-comment.dto"
+import { CommentsService } from "./comments.service"
+import { CreateCommentDto } from "./dto/create-comment.dto"
+import { UpdateCommentDto } from "./dto/update-comment.dto"
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
 
 @ApiTags("comments")
@@ -14,7 +14,7 @@ export class CommentsController {
 
   @Post()
   @ApiOperation({ summary: "Create a new comment" })
-  create(createCommentDto: CreateCommentDto, @Request() req) {
+  create(@Body() createCommentDto: CreateCommentDto, @Request() req) {
     return this.commentsService.create(createCommentDto, req.user.id)
   }
 
@@ -26,7 +26,7 @@ export class CommentsController {
 
   @Patch(":id")
   @ApiOperation({ summary: "Update comment" })
-  update(@Param('id') id: string, updateCommentDto: UpdateCommentDto, @Request() req) {
+  update(@Param('id') id: string, @Body() updateCommentDto: UpdateCommentDto, @Request() req) {
     return this.commentsService.update(id, updateCommentDto, req.user.id)
   }
 
