@@ -7,10 +7,11 @@ import { AppModule } from "./app.module"
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter"
 import { LoggingInterceptor } from "./common/interceptors/logging.interceptor"
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor"
-
 async function bootstrap() {
+  console.log("Starting Task Manager API...")
   const app = await NestFactory.create(AppModule)
   const configService = app.get(ConfigService)
+  console.log('Environment:', configService.get('NODE_ENV'))
 
   // Security middleware
   app.use(helmet())
@@ -36,14 +37,12 @@ async function bootstrap() {
     credentials: true,
   })
 
-  // Global filters and interceptors
   app.useGlobalFilters(new GlobalExceptionFilter())
   app.useGlobalInterceptors(new LoggingInterceptor(), new ResponseInterceptor())
 
-  // API prefix
+ 
   app.setGlobalPrefix("api/v1")
 
-  // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle("Task Manager API")
     .setDescription("Professional task management system API")
