@@ -3,14 +3,18 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import type { Repository } from 'typeorm'
-import type { Comment } from '../../entities/comment.entity' // Changed from type import to regular import for decorator usage
+import { Comment } from '../../entities/comment.entity' // Changed from type import to regular import for decorator usage
 import type { CreateCommentDto } from './dto/create-comment.dto'
 import type { UpdateCommentDto } from './dto/update-comment.dto'
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly commentRepository: Repository<Comment>) {}
+  constructor(
+    @InjectRepository(Comment)
+    private readonly commentRepository: Repository<Comment>
+  ) {}
 
   async create(
     createCommentDto: CreateCommentDto,
