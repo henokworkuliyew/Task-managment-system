@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import type { Repository } from 'typeorm'
-import type { NotificationLog } from '../../entities/notification-log.entity' // Changed from type import to regular import for decorator usage
+import { NotificationLog } from '../../entities/notification-log.entity' // Changed from type import to regular import for decorator usage
 import type { PaginationDto } from '../../common/dtos/pagination.dto'
 import type { NotificationType } from '../../common/enums'
 
 @Injectable()
 export class NotificationsService {
   constructor(
-    private readonly notificationRepository: Repository<NotificationLog> // Removed the decorator here as it's not valid
+    @InjectRepository(NotificationLog)
+    private readonly notificationRepository: Repository<NotificationLog>
   ) {}
 
   async create(
