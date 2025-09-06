@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import type { Repository } from 'typeorm'
-import type { Issue } from '../../entities/issue.entity' // Changed from type import to regular import for decorator usage
+import { Issue } from '../../entities/issue.entity' // Changed from type import to regular import for decorator usage
 import type { CreateIssueDto } from './dto/create-issue.dto'
 import type { UpdateIssueDto } from './dto/update-issue.dto'
 
 @Injectable()
 export class IssuesService {
   constructor(
-    private readonly issueRepository: Repository<Issue> // Removed @InjectRepository decorator
+    @InjectRepository(Issue)
+    private readonly issueRepository: Repository<Issue>
   ) {}
 
   async create(
