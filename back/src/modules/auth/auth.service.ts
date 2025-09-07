@@ -105,10 +105,19 @@ export class AuthService {
     // Save refresh token
     await this.updateRefreshToken(user.id, tokens.refreshToken)
 
-    return {
+    const response = {
       user: this.sanitizeUser(user),
       ...tokens,
     }
+
+    console.log('Auth Service - Login response structure:', {
+      hasUser: !!response.user,
+      hasAccessToken: !!response.accessToken,
+      hasRefreshToken: !!response.refreshToken,
+      responseKeys: Object.keys(response)
+    })
+
+    return response
   }
 
   async forgotPassword(email: string) {
@@ -244,6 +253,8 @@ export class AuthService {
       role: user.role,
     }
 
+    console.log('Auth Service - Generating tokens for payload:', payload)
+
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, {
@@ -252,6 +263,8 @@ export class AuthService {
           this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d',
       }),
     ])
+
+    console.log('Auth Service - Tokens generated successfully')
 
     return {
       accessToken,
@@ -278,14 +291,18 @@ export class AuthService {
   }
 
   async validateUser(payload: any): Promise<User> {
+    console.log('Auth Service - Validating user with payload:', payload)
+    
     const user = await this.userRepository.findOne({
       where: { id: payload.sub, isActive: true },
     })
 
     if (!user) {
+      console.log('Auth Service - User not found or inactive for ID:', payload.sub)
       throw new UnauthorizedException()
     }
 
+    console.log('Auth Service - User found and active:', user.id, user.email)
     return user
   }
 }
