@@ -10,23 +10,21 @@ import { useAppDispatch } from '../../redux/hooks';
 import { register as registerUser } from '../../redux/slices/authSlice';
 
 interface RegisterFormValues {
-  firstName: string;
+  name: string;
   email: string;
   password: string;
-  confirmPassword: string;
   acceptTerms: boolean;
 }
 
 const initialValues: RegisterFormValues = {
-  firstName: '',
+  name: '',
   email: '',
   password: '',
-  confirmPassword: '',
   acceptTerms: false,
 };
 
 const validationSchema = Yup.object({
-  firstName: Yup.string().required('First name is required'),
+  name: Yup.string().required('Name is required'),
   email: Yup.string().email('Invalid email address').required('Email is required'),
   password: Yup.string()
     .min(8, 'Password must be at least 8 characters')
@@ -35,9 +33,6 @@ const validationSchema = Yup.object({
       'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
     )
     .required('Password is required'),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref('password')], 'Passwords must match')
-    .required('Confirm password is required'),
   acceptTerms: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
 });
 
@@ -45,18 +40,16 @@ export default function RegisterForm() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
       const resultAction = await dispatch(registerUser({
-        firstName: values.firstName,
+        name: values.name,
         email: values.email,
         password: values.password,
-        confirmPassword: values.confirmPassword,
-      }));   
+      }));
       if (registerUser.fulfilled.match(resultAction)) {
         toast.success('Registration successful! Please verify your email.');
         router.push('/auth/verify-email');
@@ -78,10 +71,6 @@ export default function RegisterForm() {
     setShowPassword(!showPassword);
   };
 
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
-
   return (
     <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Create an Account</h2>
@@ -94,17 +83,17 @@ export default function RegisterForm() {
         {({ isSubmitting: formikSubmitting }) => (
           <Form className="space-y-4">
             <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
                 </label>
                 <Field
                   type="text"
-                  id="firstName"
-                  name="firstName"
+                  id="name"
+                  name="name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter your first name"
+                  placeholder="Enter your full name"
                 />
-                <ErrorMessage name="firstName" component="div" className="mt-1 text-sm text-red-600" />
+                <ErrorMessage name="name" component="div" className="mt-1 text-sm text-red-600" />
               </div>
 
             <div>
@@ -148,32 +137,6 @@ export default function RegisterForm() {
               <ErrorMessage name="password" component="div" className="mt-1 text-sm text-red-600" />
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Field
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Confirm your password"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={toggleConfirmPasswordVisibility}
-                >
-                  {showConfirmPassword ? (
-                    <FaEyeSlash className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <FaEye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              <ErrorMessage name="confirmPassword" component="div" className="mt-1 text-sm text-red-600" />
-            </div>
 
             <div className="flex items-center">
               <Field
