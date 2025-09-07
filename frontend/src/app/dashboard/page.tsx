@@ -14,7 +14,8 @@ export default function DashboardPage() {
   const { projects, loading: projectsLoading } = useAppSelector((state) => state.projects);
   const { tasks, loading: tasksLoading } = useAppSelector((state) => state.tasks);
   const { issues, loading: issuesLoading } = useAppSelector((state) => state.issues);
-
+ 
+ 
   useEffect(() => {
     dispatch(fetchProjects({}));
     dispatch(fetchTasks({}));
@@ -37,7 +38,7 @@ export default function DashboardPage() {
     <div>
       <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
       <p className="mt-1 text-sm text-gray-500">Welcome back, {user?.name || 'User'}!</p>
-
+    
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {/* Projects Card */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
@@ -52,7 +53,7 @@ export default function DashboardPage() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Total Projects</dt>
                   <dd>
-                    <div className="text-lg font-medium text-gray-900">{projects.length}</div>
+                    <div className="text-lg font-medium text-gray-900">{Array.isArray(projects) ? projects.length : 0}</div>
                   </dd>
                 </dl>
               </div>
@@ -80,7 +81,7 @@ export default function DashboardPage() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Total Tasks</dt>
                   <dd>
-                    <div className="text-lg font-medium text-gray-900">{tasks.length}</div>
+                    <div className="text-lg font-medium text-gray-900">{Array.isArray(tasks) ? tasks.length : 0}</div>
                   </dd>
                 </dl>
               </div>
@@ -108,7 +109,7 @@ export default function DashboardPage() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Open Issues</dt>
                   <dd>
-                    <div className="text-lg font-medium text-gray-900">{issues.length}</div>
+                    <div className="text-lg font-medium text-gray-900">{Array.isArray(issues) ? issues.length : 0}</div>
                   </dd>
                 </dl>
               </div>
@@ -128,7 +129,7 @@ export default function DashboardPage() {
       <h2 className="mt-8 text-lg font-medium text-gray-900">Recent Activity</h2>
       <div className="mt-2 bg-white shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200">
-          {tasks.slice(0, 5).map((task: Task) => (
+          {Array.isArray(tasks) ? tasks.slice(0, 5).map((task: Task) => (
             <li key={task.id}>
               <a href={`/dashboard/tasks/${task.id}`} className="block hover:bg-gray-50">
                 <div className="px-4 py-4 sm:px-6">
@@ -161,7 +162,11 @@ export default function DashboardPage() {
                 </div>
               </a>
             </li>
-          ))}
+          )) : (
+            <li className="px-4 py-4 text-center text-gray-500">
+              No tasks available
+            </li>
+          )}
         </ul>
       </div>
     </div>
