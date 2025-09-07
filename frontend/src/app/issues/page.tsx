@@ -25,12 +25,12 @@ export default function IssuesPage() {
     dispatch(fetchProjects({}));
   }, [dispatch]);
 
-  const filteredIssues = issues.filter((issue: Issue) => {
+  const filteredIssues = Array.isArray(issues) ? issues.filter((issue: Issue) => {
     if (filterStatus && issue.status !== filterStatus) return false;
     if (filterPriority && issue.priority !== filterPriority) return false;
     if (filterProject && issue.projectId !== filterProject) return false;
     return true;
-  });
+  }) : [];
 
   const handleCreateSuccess = () => {
     setIsCreateModalOpen(false);
@@ -89,11 +89,11 @@ export default function IssuesPage() {
                 onChange={(e) => setFilterProject(e.target.value)}
               >
                 <option value="">All Projects</option>
-                {projects.map((project: Project) => (
+                {Array.isArray(projects) ? projects.map((project: Project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
                   </option>
-                ))}
+                )) : null}
               </select>
               <FiFilter className="absolute left-3 top-3 text-gray-400" />
             </div>
