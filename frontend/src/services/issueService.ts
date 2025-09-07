@@ -19,26 +19,26 @@ export interface UpdateIssueData extends Partial<CreateIssueData> {
 const issueService = {
   
   getAllIssues: async () => {
-    const response = await api.get<Issue[]>('/issues');
-    return response.data;
+    const response = await api.get<{success: boolean, data: Issue[], timestamp: string}>('/issues');
+    return response.data.data;
   },
 
   
   getIssueById: async (id: string) => {
-    const response = await api.get<Issue>(`/issues/${id}`);
-    return response.data;
+    const response = await api.get<{success: boolean, data: Issue, timestamp: string}>(`/issues/${id}`);
+    return response.data.data;
   },
 
   
   createIssue: async (issueData: CreateIssueData) => {
-    const response = await api.post<Issue>('/issues', issueData);
-    return response.data;
+    const response = await api.post<{success: boolean, data: Issue, timestamp: string}>('/issues', issueData);
+    return response.data.data;
   },
 
   
   updateIssue: async ({ id, ...issueData }: UpdateIssueData) => {
-    const response = await api.put<Issue>(`/issues/${id}`, issueData);
-    return response.data;
+    const response = await api.put<{success: boolean, data: Issue, timestamp: string}>(`/issues/${id}`, issueData);
+    return response.data.data;
   },
 
   
@@ -49,18 +49,18 @@ const issueService = {
 
   
   getIssuesByProject: async (projectId: string) => {
-    const response = await api.get<Issue[]>(`/issues/project/${projectId}`);
-    return response.data;
+    const response = await api.get<{success: boolean, data: Issue[], timestamp: string}>(`/issues/project/${projectId}`);
+    return response.data.data;
   },
 
   getIssuesByTask: async (taskId: string) => {
-    const response = await api.get<Issue[]>(`/issues/task/${taskId}`);
-    return response.data;
+    const response = await api.get<{success: boolean, data: Issue[], timestamp: string}>(`/issues/task/${taskId}`);
+    return response.data.data;
   },
 
   getIssuesByUser: async (userId: string) => {
-    const response = await api.get<Issue[]>(`/issues/user/${userId}`);
-    return response.data;
+    const response = await api.get<{success: boolean, data: Issue[], timestamp: string}>(`/issues/user/${userId}`);
+    return response.data.data;
   },
 
   changeIssueStatus: async (issueId: string, status: string) => {
