@@ -1,12 +1,16 @@
 // Auth Types
 export interface User {
   id: string;
-  firstName: string;
-   email: string;
+  name: string;
+  email: string;
   role: string;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
+  avatar?: string;
+  bio?: string;
+  skills?: string[];
+  availability?: Record<string, any>;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthState {
