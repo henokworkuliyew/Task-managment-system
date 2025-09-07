@@ -80,6 +80,11 @@ export class AuthController {
   @ApiOperation({ summary: "Logout user" })
   @ApiResponse({ status: 200, description: "User successfully logged out" })
   async logout(@Request() req) {
-    return this.authService.logout(req.user.id)
+    const userId = req.user?.id;
+    if (userId) {
+      return this.authService.logout(userId);
+    }
+    // If no user ID, just return success (token is already invalid)
+    return { message: "Logged out successfully" };
   }
 }
