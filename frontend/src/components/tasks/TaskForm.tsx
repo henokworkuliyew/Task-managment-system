@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { createTask, updateTask } from '../../redux/slices/taskSlice';
 import { fetchProjects } from '../../redux/slices/projectSlice';
-import { Task, Priority, TaskStatus, RootState } from '../../types';
+import { Task, Priority, TaskStatus } from '../../types';
 import { FiSave, FiX } from 'react-icons/fi';
 
 interface TaskFormProps {
@@ -17,16 +17,17 @@ interface TaskFormProps {
 }
 
 const TaskForm = ({ task, projectId, onSuccess, onCancel }: TaskFormProps) => {
-  const dispatch = useDispatch();
+  console.log('TaskForm rendered with props:', { task, projectId, onSuccess, onCancel });
+  const dispatch = useAppDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!task;
   
-  const projects = useSelector((state: RootState) => state.projects.projects);
-  const users = useSelector((state: RootState) => state.auth.user);
+  const projects = useAppSelector((state) => state.projects.projects);
+  const users = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
-    if (projects.length === 0) {
-      dispatch(fetchProjects() as any);
+    if (Array.isArray(projects) && projects.length === 0) {
+      dispatch(fetchProjects({}));
     }
   }, [dispatch, projects.length]);
 
@@ -36,8 +37,8 @@ const TaskForm = ({ task, projectId, onSuccess, onCancel }: TaskFormProps) => {
     status: task?.status || 'todo' as TaskStatus,
     priority: task?.priority || 'medium' as Priority,
     dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
-    projectId: task?.projectId || projectId || '',
-    assignedToId: task?.assignedTo?.id || '',
+    projectId: task?.project?.id || projectId || '',
+    assignedToId: task?.assignee?.id || '',
   };
 
   const validationSchema = Yup.object({
@@ -124,11 +125,11 @@ const TaskForm = ({ task, projectId, onSuccess, onCancel }: TaskFormProps) => {
             disabled={!!projectId}
           >
             <option value="">Select a project</option>
-            {projects.map((project) => (
+            {Array.isArray(projects) ? projects.map((project: any) => (
               <option key={project.id} value={project.id}>
                 {project.name}
               </option>
-            ))}
+            )) : null}
           </select>
           {formik.touched.projectId && formik.errors.projectId && (
             <div className="text-red-500 text-sm mt-1">{formik.errors.projectId}</div>
@@ -146,11 +147,11 @@ const TaskForm = ({ task, projectId, onSuccess, onCancel }: TaskFormProps) => {
             {...formik.getFieldProps('assignedToId')}
           >
             <option value="">Unassigned</option>
-            {users.map((user) => (
+            {Array.isArray(users) ? users.map((user: any) => (
               <option key={user.id} value={user.id}>
                 {user.name}
               </option>
-            ))}
+            )) : null}
           </select>
           {formik.touched.assignedToId && formik.errors.assignedToId && (
             <div className="text-red-500 text-sm mt-1">{formik.errors.assignedToId}</div>
