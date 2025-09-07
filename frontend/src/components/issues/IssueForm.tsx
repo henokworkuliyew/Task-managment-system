@@ -112,9 +112,9 @@ const IssueForm = ({ issue, projectId, taskId, onSuccess, onCancel }: IssueFormP
             {...formik.getFieldProps('projectId')}
           >
             <option value="">Select a project</option>
-            {projects.map((project: Project) => (
+            {Array.isArray(projects) ? projects.map((project: Project) => (
               <option key={project.id} value={project.id}>{project.name}</option>
-            ))}
+            )) : null}
           </select>
         </div>
 
