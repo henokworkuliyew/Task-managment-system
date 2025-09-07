@@ -23,6 +23,12 @@ export class NotificationsController {
     return this.notificationsService.findAll(req.query, req.user.id)
   }
 
+  @Get('unread/count')
+  @ApiOperation({ summary: 'Get unread notifications count' })
+  getUnreadCount(@Request() req) {
+    return this.notificationsService.getUnreadCount(req.user.id)
+  }
+
   @Patch(':id/read')
   @ApiOperation({ summary: 'Mark notification as read' })
   markAsRead(@Param('id') id: string, @Request() req) {
