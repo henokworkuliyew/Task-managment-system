@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import { getCurrentUser } from '../../redux/slices/authSlice';
@@ -13,9 +13,15 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, loading } = useAppSelector((state) => state.auth);
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Fix hydration mismatch by ensuring client-side rendering
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
-    if (!isAuthenticated && !loading) {
+    if (isHydrated && !isAuthenticated && !loading) {
       // Try to get current user if we have a token but not authenticated yet
       dispatch(getCurrentUser())
         .unwrap()
@@ -24,10 +30,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
           router.push('/auth/login');
         });
     }
-  }, [isAuthenticated, loading, dispatch, router]);
+  }, [isHydrated, isAuthenticated, loading, dispatch, router]);
 
-  // Show loading state while checking authentication
-  if (loading) {
+  // Prevent hydration mismatch by not rendering until hydrated
+  if (!isHydrated || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
