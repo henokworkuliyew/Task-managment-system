@@ -30,7 +30,7 @@ export default function NotificationsPage() {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
-        ) : notifications.length === 0 ? (
+        ) : !Array.isArray(notifications) || notifications.length === 0 ? (
           <Card className="text-center py-12">
             <h3 className="text-lg font-medium text-gray-900">No notifications</h3>
             <p className="mt-2 text-sm text-gray-500">
