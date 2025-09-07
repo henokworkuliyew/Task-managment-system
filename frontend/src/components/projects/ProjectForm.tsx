@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '../../redux/hooks';
 import { createProject, updateProject } from '../../redux/slices/projectSlice';
 import { Project, Priority } from '../../types';
 import { FiSave, FiX } from 'react-icons/fi';
@@ -15,7 +15,7 @@ interface ProjectFormProps {
 }
 
 const ProjectForm = ({ project, onSuccess, onCancel }: ProjectFormProps) => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!project;
 
