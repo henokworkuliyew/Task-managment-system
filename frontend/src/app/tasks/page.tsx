@@ -24,11 +24,11 @@ export default function TasksPage() {
     dispatch(fetchProjects({}));
   }, [dispatch]);
 
-  const filteredTasks = tasks.filter((task: Task) => {
+  const filteredTasks = Array.isArray(tasks) ? tasks.filter((task: Task) => {
     if (filterStatus && task.status !== filterStatus) return false;
-    if (filterProject && task.project.id !== filterProject) return false;
+    if (filterProject && task.project?.id !== filterProject) return false;
     return true;
-  });
+  }) : [];
 
   const handleCreateSuccess = () => {
     setIsCreateModalOpen(false);
@@ -73,18 +73,22 @@ export default function TasksPage() {
                 onChange={(e) => setFilterProject(e.target.value)}
               >
                 <option value="">All Projects</option>
-                {projects.map((project: Project) => (
+                {Array.isArray(projects) ? projects.map((project: Project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
                   </option>
-                ))}
+                )) : null}
               </select>
               <FiFilter className="absolute left-3 top-3 text-gray-400" />
             </div>
             <Button
               variant="primary"
               icon={FiPlus}
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                console.log('New Task button clicked, setting modal open to true');
+                setIsCreateModalOpen(true);
+                console.log('Modal state should now be:', true);
+              }}
             >
               New Task
             </Button>
@@ -128,11 +132,14 @@ export default function TasksPage() {
         title={editingTask ? 'Edit Task' : 'Create New Task'}
         size="lg"
       >
-        <TaskForm 
-          task={editingTask} 
-          onSuccess={handleCreateSuccess} 
-          onCancel={handleCloseModal} 
-        />
+        <div>
+          <p>DEBUG: Modal is open, isCreateModalOpen = {isCreateModalOpen.toString()}</p>
+          <TaskForm 
+            task={editingTask} 
+            onSuccess={handleCreateSuccess} 
+            onCancel={handleCloseModal} 
+          />
+        </div>
       </Modal>
     </DashboardLayout>
   );
