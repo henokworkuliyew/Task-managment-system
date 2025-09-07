@@ -6,11 +6,9 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   password: string;
-  confirmPassword: string;
 }
 
 export interface ForgotPasswordData {
@@ -35,11 +33,14 @@ export interface RefreshTokenData {
 export interface AuthResponse {
   user: {
     id: string;
-    firstName: string;
-    lastName: string;
+    name: string;
     email: string;
     role: string;
-    isVerified: boolean;
+    avatar?: string;
+    bio?: string;
+    skills?: string[];
+    availability?: Record<string, any>;
+    isActive: boolean;
   };
   accessToken: string;
   refreshToken: string;
@@ -48,14 +49,14 @@ export interface AuthResponse {
 const authService = {
 
   login: async (credentials: LoginCredentials) => {
-    const response = await api.post<AuthResponse>('/auth/login', credentials);
-    return response.data;
+    const response = await api.post<{success: boolean, data: AuthResponse, timestamp: string}>('/auth/login', credentials);
+    return response.data.data; // Extract the actual auth data from the wrapped response
   },
 
 
   register: async (userData: RegisterData) => {
-    const response = await api.post<AuthResponse>('/auth/register', userData);
-    return response.data;
+    const response = await api.post<{success: boolean, data: AuthResponse, timestamp: string}>('/auth/register', userData);
+    return response.data.data; // Extract the actual auth data from the wrapped response
   },
 
   
@@ -79,10 +80,14 @@ const authService = {
   
   refreshToken: async (refreshToken: string) => {
     const response = await api.post<{
-      accessToken: string
-      refreshToken: string
+      success: boolean;
+      data: {
+        accessToken: string;
+        refreshToken: string;
+      };
+      timestamp: string;
     }>('/auth/refresh', { refreshToken })
-    return response.data;
+    return response.data.data;
   },
 
   getCurrentUser: async () => {
