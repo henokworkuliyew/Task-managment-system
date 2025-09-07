@@ -17,26 +17,26 @@ export interface UpdateProjectData extends Partial<CreateProjectData> {
 const projectService = {
   
   getAllProjects: async () => {
-    const response = await api.get<Project[]>('/projects');
-    return response.data;
+    const response = await api.get<{success: boolean, data: Project[], timestamp: string}>('/projects');
+    return response.data.data;
   },
 
   
   getProjectById: async (id: string) => {
-    const response = await api.get<Project>(`/projects/${id}`);
-    return response.data;
+    const response = await api.get<{success: boolean, data: Project, timestamp: string}>(`/projects/${id}`);
+    return response.data.data;
   },
 
   
   createProject: async (projectData: CreateProjectData) => {
-    const response = await api.post<Project>('/projects', projectData);
-    return response.data;
+    const response = await api.post<{success: boolean, data: Project, timestamp: string}>('/projects', projectData);
+    return response.data.data;
   },
 
   
   updateProject: async ({ id, ...projectData }: UpdateProjectData) => {
-    const response = await api.put<Project>(`/projects/${id}`, projectData);
-    return response.data;
+    const response = await api.put<{success: boolean, data: Project, timestamp: string}>(`/projects/${id}`, projectData);
+    return response.data.data;
   },
 
   
@@ -47,8 +47,8 @@ const projectService = {
 
   
   getProjectsByUser: async (userId: string) => {
-    const response = await api.get<Project[]>(`/projects/user/${userId}`);
-    return response.data;
+    const response = await api.get<{success: boolean, data: Project[], timestamp: string}>(`/projects/user/${userId}`);
+    return response.data.data;
   },
 
   
