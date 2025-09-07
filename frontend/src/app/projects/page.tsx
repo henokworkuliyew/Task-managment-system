@@ -19,9 +19,11 @@ export default function ProjectsPage() {
     dispatch(fetchProjects({}));
   }, [dispatch]);
 
-  const filteredProjects = filterPriority
-    ? projects.filter((project: Project) => project.priority === filterPriority)
-    : projects;
+  const filteredProjects = Array.isArray(projects) 
+    ? (filterPriority
+        ? projects.filter((project: Project) => project.priority === filterPriority)
+        : projects)
+    : [];
 
   const handleCreateSuccess = () => {
     setIsCreateModalOpen(false);
@@ -50,7 +52,10 @@ export default function ProjectsPage() {
             <Button
               variant="primary"
               icon={FiPlus}
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                console.log('New Project button clicked');
+                setIsCreateModalOpen(true);
+              }}
             >
               New Project
             </Button>
@@ -90,12 +95,16 @@ export default function ProjectsPage() {
 
       <Modal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={() => {
+          console.log('Modal closing');
+          setIsCreateModalOpen(false);
+        }}
         title="Create New Project"
         size="lg"
       >
         <ProjectForm onSuccess={handleCreateSuccess} onCancel={() => setIsCreateModalOpen(false)} />
       </Modal>
+      
     </DashboardLayout>
   );
 }
