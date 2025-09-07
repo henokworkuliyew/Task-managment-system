@@ -1527,7 +1527,11 @@ let AuthController = class AuthController {
         return this.authService.refreshToken(refreshTokenDto.refreshToken);
     }
     async logout(req) {
-        return this.authService.logout(req.user.id);
+        const userId = req.user?.id;
+        if (userId) {
+            return this.authService.logout(userId);
+        }
+        return { message: "Logged out successfully" };
     }
 };
 exports.AuthController = AuthController;
@@ -1769,10 +1773,17 @@ let AuthService = class AuthService {
         }
         const tokens = await this.generateTokens(user);
         await this.updateRefreshToken(user.id, tokens.refreshToken);
-        return {
+        const response = {
             user: this.sanitizeUser(user),
             ...tokens,
         };
+        console.log('Auth Service - Login response structure:', {
+            hasUser: !!response.user,
+            hasAccessToken: !!response.accessToken,
+            hasRefreshToken: !!response.refreshToken,
+            responseKeys: Object.keys(response)
+        });
+        return response;
     }
     async forgotPassword(email) {
         const user = await this.userRepository.findOne({ where: { email } });
@@ -1870,6 +1881,7 @@ let AuthService = class AuthService {
             email: user.email,
             role: user.role,
         };
+        console.log('Auth Service - Generating tokens for payload:', payload);
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload),
             this.jwtService.signAsync(payload, {
@@ -1877,6 +1889,7 @@ let AuthService = class AuthService {
                 expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN') || '7d',
             }),
         ]);
+        console.log('Auth Service - Tokens generated successfully');
         return {
             accessToken,
             refreshToken,
@@ -1893,12 +1906,15 @@ let AuthService = class AuthService {
         return sanitized;
     }
     async validateUser(payload) {
+        console.log('Auth Service - Validating user with payload:', payload);
         const user = await this.userRepository.findOne({
             where: { id: payload.sub, isActive: true },
         });
         if (!user) {
+            console.log('Auth Service - User not found or inactive for ID:', payload.sub);
             throw new common_1.UnauthorizedException();
         }
+        console.log('Auth Service - User found and active:', user.id, user.email);
         return user;
     }
 };
@@ -2299,13 +2315,23 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         });
         this.configService = configService;
         this.authService = authService;
+        console.log('JWT Strategy initialized with secret:', configService.get("JWT_SECRET") ? 'SECRET_SET' : 'SECRET_MISSING');
     }
     async validate(payload) {
-        const user = await this.authService.validateUser(payload);
-        if (!user) {
+        console.log('JWT Strategy - Validating payload:', payload);
+        try {
+            const user = await this.authService.validateUser(payload);
+            if (!user) {
+                console.log('JWT Strategy - User not found or inactive');
+                throw new common_1.UnauthorizedException();
+            }
+            console.log('JWT Strategy - User validated successfully:', user.id);
+            return user;
+        }
+        catch (error) {
+            console.log('JWT Strategy - Validation error:', error.message);
             throw new common_1.UnauthorizedException();
         }
-        return user;
     }
 };
 exports.JwtStrategy = JwtStrategy;
@@ -2978,6 +3004,9 @@ let NotificationsController = class NotificationsController {
     findAll(req) {
         return this.notificationsService.findAll(req.query, req.user.id);
     }
+    getUnreadCount(req) {
+        return this.notificationsService.getUnreadCount(req.user.id);
+    }
     markAsRead(id, req) {
         return this.notificationsService.markAsRead(id, req.user.id);
     }
@@ -2994,6 +3023,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], NotificationsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('unread/count'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get unread notifications count' }),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], NotificationsController.prototype, "getUnreadCount", null);
 __decorate([
     (0, common_1.Patch)(':id/read'),
     (0, swagger_1.ApiOperation)({ summary: 'Mark notification as read' }),
@@ -3122,6 +3159,12 @@ let NotificationsService = class NotificationsService {
     }
     async markAllAsRead(userId) {
         await this.notificationRepository.update({ userId, read: false }, { read: true });
+    }
+    async getUnreadCount(userId) {
+        const count = await this.notificationRepository.count({
+            where: { userId, read: false },
+        });
+        return { count };
     }
 };
 exports.NotificationsService = NotificationsService;
@@ -3257,6 +3300,7 @@ let ProjectsController = class ProjectsController {
         return this.projectsService.create(createProjectDto, req.user.id);
     }
     findAll(paginationDto, req) {
+        console.log('Projects Controller - Headers:', req.headers.authorization ? 'AUTH_HEADER_PRESENT' : 'AUTH_HEADER_MISSING');
         return this.projectsService.findAll(paginationDto, req.user.id);
     }
     findOne(id, req) {
@@ -3281,7 +3325,7 @@ __decorate([
 ], ProjectsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: "Get all projects with pagination" }),
+    (0, swagger_1.ApiOperation)({ summary: "Get all projects" }),
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
