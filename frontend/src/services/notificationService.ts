@@ -4,13 +4,13 @@ import api from './api';
 const notificationService = {
  
   getUserNotifications: async () => {
-    const response = await api.get<Notification[]>('/notifications');
-    return response.data;
+    const response = await api.get<{success: boolean, data: Notification[], timestamp: string}>('/notifications');
+    return response.data.data;
   },
 
   getUnreadCount: async () => {
-    const response = await api.get<{ count: number }>('/notifications/unread/count');
-    return response.data;
+    const response = await api.get<{success: boolean, data: { count: number }, timestamp: string}>('/notifications/unread/count');
+    return response.data.data;
   },
 
   markAsRead: async (notificationId: string) => {
