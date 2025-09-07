@@ -2,22 +2,52 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authService } from '../../services';
 import { AuthState, User } from '../../types';
 
+/**
+ * Helper function to safely get tokens from localStorage
+ * Filters out invalid values like "undefined", "null", empty strings
+ */
+const getStoredToken = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  const token = localStorage.getItem(key);
+  if (!token || token === 'undefined' || token === 'null' || token.trim() === '') {
+    return null;
+  }
+  return token.trim();
+};
+
+/**
+ * Helper function to safely store tokens in localStorage
+ * Only stores valid tokens, clears invalid ones
+ */
+const storeToken = (key: string, token: string | null | undefined): void => {
+  if (typeof window === 'undefined') return;
+  
+  console.log(`storeToken(${key}):`, token ? `STORING_TOKEN_LENGTH_${token.length}` : 'REMOVING_TOKEN');
+  if (!token || token === 'undefined' || token === 'null' || token.trim() === '') {
+    localStorage.removeItem(key);
+  } else {
+    localStorage.setItem(key, token.trim());
+    console.log(`Token stored in localStorage for ${key}`);
+  }
+};
+
 const initialState: AuthState = {
   user: null,
-  accessToken: typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null,
-  refreshToken: typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null,
-  isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('accessToken') : false,
+  accessToken: getStoredToken('accessToken'),
+  refreshToken: getStoredToken('refreshToken'),
+  isAuthenticated: !!getStoredToken('accessToken'),
   isLoading: false,
   error: null,
 };
 
-export const register = createAsyncThunk<{ user: User; accessToken: string; refreshToken: string }, { firstName: string; email: string; password: string; confirmPassword: string }>(
+export const register = createAsyncThunk<{ user: User; accessToken: string; refreshToken: string }, { name: string; email: string; password: string }>(
   'auth/register',
-  async (data: { firstName: string;  email: string; password: string; confirmPassword: string }, { rejectWithValue }) => {
+  async (data: { name: string; email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await authService.register(data);
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      storeToken('accessToken', response.accessToken);
+      storeToken('refreshToken', response.refreshToken);
       return response;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Registration failed');
@@ -30,10 +60,33 @@ export const login = createAsyncThunk<{ user: User; accessToken: string; refresh
   async (data: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await authService.login(data);
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      console.log('Login API response received - RAW:', response);
+      console.log('Login API response received - ANALYSIS:', {
+        hasUser: !!response.user,
+        hasAccessToken: !!response.accessToken,
+        hasRefreshToken: !!response.refreshToken,
+        accessTokenLength: response.accessToken?.length,
+        refreshTokenLength: response.refreshToken?.length,
+        responseKeys: Object.keys(response || {}),
+        accessTokenValue: response.accessToken,
+        refreshTokenValue: response.refreshToken
+      });
+      
+      console.log('Storing tokens in localStorage...');
+      storeToken('accessToken', response.accessToken);
+      storeToken('refreshToken', response.refreshToken);
+      
+      // Verify tokens were stored
+      const storedAccess = localStorage.getItem('accessToken');
+      const storedRefresh = localStorage.getItem('refreshToken');
+      console.log('Verification after storage:', {
+        storedAccessToken: storedAccess ? `LENGTH_${storedAccess.length}` : 'NULL',
+        storedRefreshToken: storedRefresh ? `LENGTH_${storedRefresh.length}` : 'NULL'
+      });
+      
       return response;
     } catch (error: any) {
+      console.error('Login failed:', error);
       return rejectWithValue(error.response?.data?.message || 'Login failed');
     }
   }
@@ -111,6 +164,30 @@ export const getCurrentUser = createAsyncThunk<User, void>(
   }
 );
 
+export const refreshToken = createAsyncThunk(
+  'auth/refreshToken',
+  async (_, { rejectWithValue }) => {
+    try {
+      const storedRefreshToken = getStoredToken('refreshToken');
+      
+      if (!storedRefreshToken) {
+        throw new Error('No valid refresh token available');
+      }
+      
+      const response = await authService.refreshToken(storedRefreshToken);
+      storeToken('accessToken', response.accessToken);
+      storeToken('refreshToken', response.refreshToken);
+      
+      return response;
+    } catch (error: any) {
+      // Clear invalid tokens
+      storeToken('accessToken', null);
+      storeToken('refreshToken', null);
+      return rejectWithValue(error.response?.data?.message || 'Token refresh failed');
+    }
+  }
+);
+
 export const logout = createAsyncThunk('auth/logout', async () => {
   try {
     await authService.logout();
@@ -118,8 +195,8 @@ export const logout = createAsyncThunk('auth/logout', async () => {
     // Even if the API call fails, we still want to clear local storage
     console.error('Logout API call failed:', error);
   }
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
+  storeToken('accessToken', null);
+  storeToken('refreshToken', null);
   return null;
 });
 
