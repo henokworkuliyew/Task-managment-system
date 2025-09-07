@@ -12,6 +12,7 @@ interface ModalProps {
 }
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) => {
+  console.log('Modal rendered with isOpen:', isOpen, 'title:', title);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,8 +30,18 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.addEventListener('mousedown', handleClickOutside);
+      // Add a small delay before attaching click-outside handler to prevent immediate closure
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 100);
       document.body.style.overflow = 'hidden';
+      
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('keydown', handleEscape);
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.body.style.overflow = 'auto';
+      };
     }
 
     return () => {
@@ -58,13 +69,14 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true"></div>
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
         <div
           ref={modalRef}
           className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle ${getSizeClasses()} w-full`}
+          style={{ minHeight: '200px', border: '2px solid red' }}
         >
           {title && (
             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -78,7 +90,10 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
               </button>
             </div>
           )}
-          <div className="px-6 py-4">{children}</div>
+          <div className="px-6 py-4" style={{ backgroundColor: 'lightblue', minHeight: '100px' }}>
+            <div>DEBUG: Modal content area</div>
+            {children}
+          </div>
         </div>
       </div>
     </div>
