@@ -1,4 +1,3 @@
-// Smart refresh manager for social media-like experience
 export class RefreshManager {
   private static lastRefreshTimes: Map<string, number> = new Map();
   private static REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
