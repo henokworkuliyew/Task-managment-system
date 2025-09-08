@@ -14,6 +14,7 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
 import { TimeTrackingModule } from "./modules/time-tracking/time-tracking.module"
 import { ReportsModule } from "./modules/reports/reports.module"
 import { WebhooksModule } from "./modules/webhooks/webhooks.module"
+import { InvitationsModule } from "./modules/invitations/invitations.module"
 
 
 import { databaseConfig } from "./config/database.config"
@@ -76,6 +77,7 @@ import { cloudinaryConfig } from "./config/cloudinary.config"
     TimeTrackingModule,
     ReportsModule,
     WebhooksModule,
+    InvitationsModule,
   ],
   providers: [
     {
