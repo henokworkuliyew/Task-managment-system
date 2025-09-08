@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { Issue, IssuePriority, IssueStatus, IssueType } from '../../types';
+import { Issue, IssueStatus, IssuePriority, IssueType } from '../../types';
 import { updateIssue } from '../../redux/slices/issueSlice';
+import { useAppDispatch } from '../../redux/hooks';
 import { FiCalendar, FiTag, FiUser, FiAlertCircle } from 'react-icons/fi';
 
 interface IssueCardProps {
@@ -12,10 +12,10 @@ interface IssueCardProps {
 }
 
 const IssueCard = ({ issue, onEdit }: IssueCardProps) => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [isUpdating, setIsUpdating] = useState(false);
   
-  const { id, title, description, status, priority, type, createdAt, reportedBy, assignedTo, projectId } = issue;
+  const { id, title, description, status, priority, createdAt, reporter, assignee } = issue;
 
   const getPriorityColor = (priority: IssuePriority) => {
     switch (priority) {
@@ -61,14 +61,14 @@ const IssueCard = ({ issue, onEdit }: IssueCardProps) => {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Not set';
+    if (dateString === null) return 'Not set';
     return new Date(dateString).toLocaleDateString();
   };
 
   const handleStatusChange = async (newStatus: IssueStatus) => {
     try {
       setIsUpdating(true);
-      await dispatch(updateIssue({ id, data: { status: newStatus } }) as any);
+      dispatch(updateIssue({ id, data: { status: newStatus, id } }));
     } catch (error) {
       console.error('Error updating issue status:', error);
     } finally {
@@ -80,11 +80,11 @@ const IssueCard = ({ issue, onEdit }: IssueCardProps) => {
     <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center">
-          <span className="mr-2">{getTypeIcon(type)}</span>
+          <span className="text-gray-600">{reporter.name || reporter.email}</span>
           <h3 className="text-lg font-medium text-gray-800">{title}</h3>
         </div>
         <div className="flex space-x-2">
-          <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(priority)}`}>
+          <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(priority || 'low')}`}>
             {priority}
           </span>
           <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(status)}`}>
@@ -105,17 +105,17 @@ const IssueCard = ({ issue, onEdit }: IssueCardProps) => {
           <span>Created: {formatDate(createdAt)}</span>
         </div>
         
-        {reportedBy && (
+        {reporter && (
           <div className="flex items-center">
             <FiUser className="mr-1" />
-            <span>Reported by: {reportedBy.firstName} </span>
+            <span>Reported by: {reporter.name || reporter.email} </span>
           </div>
         )}
         
-        {assignedTo && (
+        {assignee && (
           <div className="flex items-center">
             <FiUser className="mr-1" />
-            <span>Assigned to: {assignedTo.firstName} </span>
+            <span>Assigned to: {assignee.name || assignee.email} </span>
           </div>
         )}
       </div>
