@@ -1,4 +1,4 @@
-import { IsEmail, IsString, Length } from "class-validator"
+import { IsEmail, IsString, Length, IsOptional } from "class-validator"
 import { ApiProperty } from "@nestjs/swagger"
 
 export class VerifyOtpDto {
@@ -10,4 +10,9 @@ export class VerifyOtpDto {
   @IsString()
   @Length(6, 6)
   otp: string
+
+  @ApiProperty({ example: "email_verification", required: false })
+  @IsString()
+  @IsOptional()
+  type?: string
 }
