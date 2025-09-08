@@ -1,14 +1,15 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { projectService } from '../../services';
 import { ProjectState, Project } from '../../types';
+import { getStoredState, setStoredState, STORAGE_KEYS } from '../../utils/localStorage';
 
 interface CreateProjectData {
   name: string;
-  description?: string;
-  startDate?: string;
-  endDate?: string;
-  priority?: 'low' | 'medium' | 'high';
-  tags?: string[];
+  description: string;
+  startDate: string;
+  endDate: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'not_started' | 'in_progress' | 'completed' | 'on_hold';
 }
 
 interface UpdateProjectData {
@@ -30,7 +31,7 @@ interface PaginationParams {
 }
 
 const initialState: ProjectState = {
-  projects: [],
+  projects: getStoredState(STORAGE_KEYS.PROJECTS) || [],
   currentProject: null,
   isLoading: false,
   error: null,
@@ -42,12 +43,15 @@ export const fetchProjects = createAsyncThunk<{ data: Project[]; totalCount: num
   async (params: PaginationParams = {}, { rejectWithValue }) => {
     try {
       const projects = await projectService.getAllProjects();
+      console.log('Fetched projects from API:', projects);
       return {
-        data: projects,
-        totalCount: projects.length
+        data: Array.isArray(projects) ? projects : [],
+        totalCount: Array.isArray(projects) ? projects.length : 0
       };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch projects');
+    } catch (error: unknown) {
+      console.error('Error fetching projects:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch projects';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -58,8 +62,9 @@ export const fetchProjectById = createAsyncThunk(
     try {
       const project = await projectService.getProjectById(id);
       return project;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch project');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch project';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -68,10 +73,11 @@ export const createProject = createAsyncThunk(
   'projects/createProject',
   async (data: CreateProjectData, { rejectWithValue }) => {
     try {
-      const project = await projectService.createProject(data as any);
+      const project = await projectService.createProject(data);
       return project;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to create project');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create project';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -80,10 +86,11 @@ export const updateProject = createAsyncThunk(
   'projects/updateProject',
   async ({ id, data }: { id: string; data: UpdateProjectData }, { rejectWithValue }) => {
     try {
-      const project = await projectService.updateProject({ id, ...data as any });
+      const project = await projectService.updateProject({ id, ...data });
       return project;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update project');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update project';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -94,8 +101,9 @@ export const deleteProject = createAsyncThunk(
     try {
       await projectService.deleteProject(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to delete project');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete project';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -106,8 +114,9 @@ export const addProjectMember = createAsyncThunk(
     try {
       await projectService.addUserToProject(projectId, userId, role);
       return { projectId, userId };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to add member');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add member';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -118,8 +127,9 @@ export const removeProjectMember = createAsyncThunk(
     try {
       await projectService.removeUserFromProject(projectId, userId);
       return { projectId, userId };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to remove member');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to remove member';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -143,8 +153,13 @@ const projectSlice = createSlice({
     });
     builder.addCase(fetchProjects.fulfilled, (state, action: PayloadAction<{ data: Project[]; totalCount: number }>) => {
       state.isLoading = false;
-      state.projects = action.payload.data;
-      state.totalCount = action.payload.totalCount;
+      console.log('Projects fetch fulfilled with payload:', action.payload);
+      // Always update state with the fetched data
+      state.projects = Array.isArray(action.payload.data) ? action.payload.data : [];
+      state.totalCount = action.payload.totalCount || 0;
+      // Persist to localStorage
+      setStoredState(STORAGE_KEYS.PROJECTS, state.projects);
+      console.log('Updated projects state:', state.projects);
     });
     builder.addCase(fetchProjects.rejected, (state, action) => {
       state.isLoading = false;
@@ -172,8 +187,21 @@ const projectSlice = createSlice({
     });
     builder.addCase(createProject.fulfilled, (state, action: PayloadAction<Project>) => {
       state.isLoading = false;
-      state.projects = [...state.projects, action.payload];
-      state.totalCount += 1;
+      if (Array.isArray(state.projects)) {
+        // Check if project already exists to avoid duplicates
+        const existingProject = state.projects.find(p => p.id === action.payload.id);
+        if (!existingProject) {
+          state.projects.push(action.payload);
+          state.totalCount += 1;
+          // Persist to localStorage
+          setStoredState(STORAGE_KEYS.PROJECTS, state.projects);
+        }
+      } else {
+        state.projects = [action.payload];
+        state.totalCount = 1;
+        // Persist to localStorage
+        setStoredState(STORAGE_KEYS.PROJECTS, state.projects);
+      }
     });
     builder.addCase(createProject.rejected, (state, action) => {
       state.isLoading = false;
