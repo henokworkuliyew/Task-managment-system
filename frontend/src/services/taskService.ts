@@ -6,7 +6,7 @@ export interface CreateTaskData {
   description: string;
   projectId: string;
   assignedTo?: string;
-  dueDate: string;
+  deadline: string;
   priority: 'low' | 'medium' | 'high';
   status: 'todo' | 'in_progress' | 'review' | 'done';
 }
