@@ -38,4 +38,5 @@ export enum NotificationType {
   COMMENT_ADDED = "comment_added",
   DEADLINE_REMINDER = "deadline_reminder",
   MENTION = "mention",
+  PROJECT_MEMBER_ADDED = "project_member_added",
 }
