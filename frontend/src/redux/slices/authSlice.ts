@@ -1,6 +1,16 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authService } from '../../services';
 import { AuthState, User } from '../../types';
+import type { AppDispatch } from '../store';
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
 
 /**
  * Helper function to safely get tokens from localStorage
@@ -32,25 +42,56 @@ const storeToken = (key: string, token: string | null | undefined): void => {
   }
 };
 
-const initialState: AuthState = {
-  user: null,
-  accessToken: getStoredToken('accessToken'),
-  refreshToken: getStoredToken('refreshToken'),
-  isAuthenticated: !!getStoredToken('accessToken'),
-  isLoading: false,
-  error: null,
+// Initialize state from localStorage
+const initializeAuthState = (): AuthState => {
+  if (typeof window === 'undefined') {
+    return {
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+    };
+  }
+
+  const accessToken = getStoredToken('accessToken');
+  const refreshToken = getStoredToken('refreshToken');
+  const storedUser = localStorage.getItem('user');
+  
+  let user = null;
+  try {
+    if (storedUser && storedUser !== 'null' && storedUser !== 'undefined') {
+      user = JSON.parse(storedUser);
+    }
+  } catch (error) {
+    console.error('Error parsing stored user:', error);
+    localStorage.removeItem('user');
+  }
+
+  const isAuthenticated = !!(accessToken && refreshToken && user);
+
+  return {
+    user,
+    accessToken,
+    refreshToken,
+    isAuthenticated,
+    isLoading: false,
+    error: null,
+  };
 };
 
-export const register = createAsyncThunk<{ user: User; accessToken: string; refreshToken: string }, { name: string; email: string; password: string }>(
+const initialState: AuthState = initializeAuthState();
+
+export const register = createAsyncThunk<{ message: string; email: string; name: string }, { name: string; email: string; password: string }>(
   'auth/register',
   async (data: { name: string; email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await authService.register(data);
-      storeToken('accessToken', response.accessToken);
-      storeToken('refreshToken', response.refreshToken);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Registration failed');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -85,9 +126,10 @@ export const login = createAsyncThunk<{ user: User; accessToken: string; refresh
       });
       
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login failed:', error);
-      return rejectWithValue(error.response?.data?.message || 'Login failed');
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Login failed');
     }
   }
 );
@@ -98,8 +140,9 @@ export const forgotPassword = createAsyncThunk(
     try {
       const response = await authService.forgotPassword({ email });
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to send reset email');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Failed to send reset email');
     }
   }
 );
@@ -110,32 +153,35 @@ export const updateProfile = createAsyncThunk(
     try {
       const response = await authService.updateProfile(data);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Failed to update profile');
     }
   }
 );
 
 export const updateSettings = createAsyncThunk(
   'auth/updateSettings',
-  async (data: { settings: any }, { rejectWithValue }) => {
+  async (data: { settings: Record<string, unknown> }, { rejectWithValue }) => {
     try {
       const response = await authService.updateProfile({ settings: data.settings });
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update settings');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Failed to update settings');
     }
   }
 );
 
 export const resetPassword = createAsyncThunk(
   'auth/resetPassword',
-  async (data: { email : string;token: string; password: string; confirmPassword: string }, { rejectWithValue }) => {
+  async (data: { token: string; password: string }, { rejectWithValue }) => {
     try {
-      const response = await authService.resetPassword(data);
+      const response = await authService.resetPassword({ token: data.token, newPassword: data.password });
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to reset password');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Failed to reset password');
     }
   }
 );
@@ -146,8 +192,35 @@ export const verifyOtp = createAsyncThunk(
     try {
       const response = await authService.verifyOtp(data);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to verify OTP');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Failed to verify OTP');
+    }
+  }
+);
+
+export const verifyEmail = createAsyncThunk(
+  'auth/verifyEmail',
+  async (token: string, { rejectWithValue }) => {
+    try {
+      const response = await authService.verifyEmail(token);
+      return response;
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Failed to verify email');
+    }
+  }
+);
+
+export const resendVerificationEmail = createAsyncThunk(
+  'auth/resendVerificationEmail',
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await authService.resendVerificationEmail(email);
+      return response;
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Failed to resend verification email');
     }
   }
 );
@@ -158,8 +231,9 @@ export const getCurrentUser = createAsyncThunk<User, void>(
     try {
       const user = await authService.getCurrentUser();
       return user;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to get user');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Failed to get user');
     }
   }
 );
@@ -179,11 +253,12 @@ export const refreshToken = createAsyncThunk(
       storeToken('refreshToken', response.refreshToken);
       
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Clear invalid tokens
       storeToken('accessToken', null);
       storeToken('refreshToken', null);
-      return rejectWithValue(error.response?.data?.message || 'Token refresh failed');
+      const apiError = error as ApiError;
+      return rejectWithValue(apiError.response?.data?.message || 'Token refresh failed');
     }
   }
 );
@@ -200,12 +275,23 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   return null;
 });
 
-const authSlice = createSlice({
+export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
     clearError: (state) => {
       state.error = null;
+    },
+    setAuthState: (state, action: PayloadAction<{
+      user: User;
+      accessToken: string;
+      refreshToken: string;
+      isAuthenticated: boolean;
+    }>) => {
+      state.user = action.payload.user;
+      state.accessToken = action.payload.accessToken;
+      state.refreshToken = action.payload.refreshToken;
+      state.isAuthenticated = action.payload.isAuthenticated;
     },
   },
   extraReducers: (builder) => {
@@ -214,12 +300,10 @@ const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     });
-    builder.addCase(register.fulfilled, (state, action: PayloadAction<{ user: User; accessToken: string; refreshToken: string }>) => {
+    builder.addCase(register.fulfilled, (state, action: PayloadAction<{ message: string; email: string; name: string }>) => {
       state.isLoading = false;
-      state.user = action.payload.user;
-      state.accessToken = action.payload.accessToken;
-      state.refreshToken = action.payload.refreshToken;
-      state.isAuthenticated = true;
+      // Don't set user or authentication state - user needs to verify OTP first
+      state.error = null;
     });
     builder.addCase(register.rejected, (state, action) => {
       state.isLoading = false;
@@ -237,6 +321,11 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
       state.isAuthenticated = true;
+      
+      // Store user data in localStorage for persistence
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
+      }
     });
     builder.addCase(login.rejected, (state, action) => {
       state.isLoading = false;
@@ -252,6 +341,11 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.user = action.payload;
       state.isAuthenticated = true;
+      
+      // Store user data in localStorage for persistence
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(action.payload));
+      }
     });
     builder.addCase(getCurrentUser.rejected, (state, action) => {
       state.isLoading = false;
@@ -268,6 +362,11 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.refreshToken = null;
       state.isAuthenticated = false;
+      
+      // Clear user data from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+      }
     });
 
     // Forgot Password
@@ -304,6 +403,11 @@ const authSlice = createSlice({
     builder.addCase(updateSettings.fulfilled, (state, action: PayloadAction<User>) => {
       state.isLoading = false;
       state.user = action.payload;
+      
+      // Store updated user data in localStorage for persistence
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(action.payload));
+      }
     });
     builder.addCase(updateSettings.rejected, (state, action) => {
       state.isLoading = false;
@@ -325,5 +429,30 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError } = authSlice.actions;
+export const initializeAuth = () => (dispatch: AppDispatch) => {
+  if (typeof window !== 'undefined') {
+    const accessToken = getStoredToken('accessToken');
+    const refreshToken = getStoredToken('refreshToken');
+    const storedUser = localStorage.getItem('user');
+    
+    if (accessToken && refreshToken && storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        dispatch(authSlice.actions.setAuthState({
+          user,
+          accessToken,
+          refreshToken,
+          isAuthenticated: true
+        }));
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+      }
+    }
+  }
+};
+
+export const { clearError, setAuthState } = authSlice.actions;
 export default authSlice.reducer;
