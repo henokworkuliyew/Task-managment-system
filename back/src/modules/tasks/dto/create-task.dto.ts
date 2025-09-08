@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsEnum, IsDateString, IsUUID, IsNumber, Min, Max, IsArray } from "class-validator"
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
+import { Transform } from "class-transformer"
 import { TaskStatus, Priority } from "../../../common/enums"
 
 export class CreateTaskDto {
@@ -25,7 +26,7 @@ export class CreateTaskDto {
   progress?: number = 0
 
   @ApiPropertyOptional({ example: "2024-12-31" })
-  @IsDateString()
+  @Transform(({ value }) => value ? new Date(value) : undefined)
   @IsOptional()
   deadline?: Date
 
@@ -57,4 +58,16 @@ export class CreateTaskDto {
   @IsUUID(undefined, { each: true })
   @IsOptional()
   dependencyIds?: string[]
+
+  @ApiPropertyOptional({ example: 8, description: "Estimated hours to complete the task" })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  estimatedHours?: number
+
+  @ApiPropertyOptional({ example: ["frontend", "urgent"], description: "Tags for categorizing tasks" })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[]
 }
