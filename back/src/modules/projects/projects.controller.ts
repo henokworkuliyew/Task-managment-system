@@ -22,6 +22,7 @@ export class ProjectsController {
   @Get()
   @ApiOperation({ summary: "Get all projects" })
   findAll(@Query() paginationDto: PaginationDto, @Request() req) {
+    console.log('Projects Controller - User ID:', req.user.id)
     console.log('Projects Controller - Headers:', req.headers.authorization ? 'AUTH_HEADER_PRESENT' : 'AUTH_HEADER_MISSING')
     return this.projectsService.findAll(paginationDto, req.user.id)
   }
