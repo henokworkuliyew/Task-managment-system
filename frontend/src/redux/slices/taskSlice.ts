@@ -1,38 +1,34 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { taskService } from '../../services';
-import { TaskState, Task, TaskStatus, Priority } from '../../types';
+import { TaskState, Task, Priority } from '../../types';
+import { getStoredState, setStoredState, STORAGE_KEYS } from '../../utils/localStorage';
 
 interface CreateTaskData {
   title: string;
-  description?: string;
-  status?: TaskStatus;
-  priority?: Priority;
-  dueDate?: string;
-  startDate?: string;
-  estimatedHours?: number;
-  assigneeId?: string;
+  description: string;
   projectId: string;
-  parentTaskId?: string;
+  assignedTo?: string;
+  deadline: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'todo' | 'in_progress' | 'review' | 'done';
 }
 
 interface UpdateTaskData {
   title?: string;
   description?: string;
-  status?: TaskStatus;
-  priority?: Priority;
-  progress?: number;
-  dueDate?: string;
-  startDate?: string;
-  completedDate?: string;
-  estimatedHours?: number;
-  assigneeId?: string;
+  projectId?: string;
+  assignedTo?: string;
+  deadline?: string;
+  priority?: 'low' | 'medium' | 'high';
+  status?: 'todo' | 'in_progress' | 'review' | 'done';
+  id?: string;
 }
 
 interface TaskQueryParams {
   page?: number;
   limit?: number;
   search?: string;
-  status?: TaskStatus;
+  status?: string;
   priority?: Priority;
   projectId?: string;
   assigneeId?: string;
@@ -42,7 +38,7 @@ interface TaskQueryParams {
 }
 
 const initialState: TaskState = {
-  tasks: [],
+  tasks: getStoredState(STORAGE_KEYS.TASKS) || [],
   currentTask: null,
   isLoading: false,
   error: null,
@@ -59,8 +55,9 @@ export const fetchTasks = createAsyncThunk<{ data: Task[]; totalCount: number },
         data: tasks,
         totalCount: tasks.length
       };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch tasks');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch tasks';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -71,8 +68,9 @@ export const fetchTaskById = createAsyncThunk(
     try {
       const task = await taskService.getTaskById(id);
       return task;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch task');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch task';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -81,10 +79,11 @@ export const createTask = createAsyncThunk(
   'tasks/createTask',
   async (data: CreateTaskData, { rejectWithValue }) => {
     try {
-      const task = await taskService.createTask(data as any);
+      const task = await taskService.createTask(data);
       return task;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to create task');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create task';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -93,10 +92,11 @@ export const updateTask = createAsyncThunk(
   'tasks/updateTask',
   async ({ id, data }: { id: string; data: UpdateTaskData }, { rejectWithValue }) => {
     try {
-      const task = await taskService.updateTask({ id, ...data as any });
+      const task = await taskService.updateTask({ ...data, id });
       return task;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update task');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update task';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -107,8 +107,9 @@ export const deleteTask = createAsyncThunk(
     try {
       await taskService.deleteTask(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to delete task');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete task';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -119,8 +120,9 @@ export const fetchTasksByProject = createAsyncThunk(
     try {
       const tasks = await taskService.getTasksByProject(projectId);
       return tasks;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch tasks for project');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch tasks for project';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -144,8 +146,13 @@ const taskSlice = createSlice({
     });
     builder.addCase(fetchTasks.fulfilled, (state, action: PayloadAction<{ data: Task[]; totalCount: number }>) => {
       state.isLoading = false;
-      state.tasks = action.payload.data;
-      state.totalCount = action.payload.totalCount;
+      // Only update if we actually received data
+      if (action.payload.data && Array.isArray(action.payload.data)) {
+        state.tasks = action.payload.data;
+        state.totalCount = action.payload.totalCount;
+        // Persist to localStorage
+        setStoredState(STORAGE_KEYS.TASKS, action.payload.data);
+      }
     });
     builder.addCase(fetchTasks.rejected, (state, action) => {
       state.isLoading = false;
@@ -184,8 +191,22 @@ const taskSlice = createSlice({
     builder.addCase(createTask.pending, (state) => { state.isLoading = true; state.error = null; });
     builder.addCase(createTask.fulfilled, (state, action: PayloadAction<Task>) => {
       state.isLoading = false;
-      state.tasks = [...state.tasks, action.payload];
-      state.totalCount += 1;
+      // Ensure state.tasks is an array before adding new task
+      if (Array.isArray(state.tasks)) {
+        // Check if task already exists to avoid duplicates
+        const existingTask = state.tasks.find(t => t.id === action.payload.id);
+        if (!existingTask) {
+          state.tasks.push(action.payload);
+          state.totalCount += 1;
+          // Persist to localStorage
+          setStoredState(STORAGE_KEYS.TASKS, state.tasks);
+        }
+      } else {
+        state.tasks = [action.payload];
+        state.totalCount = 1;
+        // Persist to localStorage
+        setStoredState(STORAGE_KEYS.TASKS, state.tasks);
+      }
     });
     builder.addCase(createTask.rejected, (state, action) => {
       state.isLoading = false;
