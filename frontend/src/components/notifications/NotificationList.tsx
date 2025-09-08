@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { fetchNotifications } from '../../redux/slices/notificationSlice';
-import { RootState } from '../../types';
+import { Notification } from '../../types';
 import NotificationItem from './NotificationItem';
 
 interface NotificationListProps {
@@ -11,11 +11,11 @@ interface NotificationListProps {
 }
 
 const NotificationList = ({ limit }: NotificationListProps) => {
-  const dispatch = useDispatch();
-  const { notifications, isLoading } = useSelector((state: RootState) => state.notifications);
+  const dispatch = useAppDispatch();
+  const { notifications, isLoading } = useAppSelector((state) => state.notifications);
 
   useEffect(() => {
-    dispatch(fetchNotifications({ limit }) as any);
+    dispatch(fetchNotifications({ limit }));
   }, [dispatch, limit]);
 
   const displayNotifications = limit ? notifications.slice(0, limit) : notifications;
@@ -38,7 +38,7 @@ const NotificationList = ({ limit }: NotificationListProps) => {
 
   return (
     <div className="divide-y divide-gray-200">
-      {displayNotifications.map((notification: any) => (
+      {displayNotifications.map((notification: Notification) => (
         <NotificationItem key={notification.id} notification={notification} />
       ))}
       {limit && notifications.length > limit && (
