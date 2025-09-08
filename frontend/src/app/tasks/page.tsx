@@ -1,28 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { fetchTasks } from '../../redux/slices/taskSlice';
 import { fetchProjects } from '../../redux/slices/projectSlice';
-import { DashboardLayout } from '../../components/layout';
-import { TaskCard, TaskForm } from '../../components/tasks';
-import { Button, Card, Modal } from '../../components/common';
+import { TaskCard } from '../../components/tasks';
+import { Button, Card } from '../../components/common';
 import { FiPlus, FiFilter } from 'react-icons/fi';
 import { Project, Task } from '@/types';
 
 export default function TasksPage() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
-  const { tasks, loading } = useAppSelector((state) => state.tasks);
+  const { tasks, isLoading } = useAppSelector((state) => state.tasks);
   const { projects } = useAppSelector((state) => state.projects);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterProject, setFilterProject] = useState<string>('');
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
-    dispatch(fetchTasks({}));
-    dispatch(fetchProjects({}));
-  }, [dispatch]);
+    // Smart fetching: only fetch if we don't have data already (like social media apps)
+    if (!Array.isArray(tasks) || tasks.length === 0) {
+      dispatch(fetchTasks({}));
+    }
+    if (!Array.isArray(projects) || projects.length === 0) {
+      dispatch(fetchProjects({}));
+    }
+  }, [dispatch, tasks, projects]);
 
   const filteredTasks = Array.isArray(tasks) ? tasks.filter((task: Task) => {
     if (filterStatus && task.status !== filterStatus) return false;
@@ -30,24 +34,11 @@ export default function TasksPage() {
     return true;
   }) : [];
 
-  const handleCreateSuccess = () => {
-    setIsCreateModalOpen(false);
-    setEditingTask(null);
-    dispatch(fetchTasks({}));
-  };
-
   const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsCreateModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsCreateModalOpen(false);
-    setEditingTask(null);
+    router.push(`/tasks/edit/${task.id}`);
   };
 
   return (
-    <DashboardLayout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Tasks</h1>
@@ -85,9 +76,8 @@ export default function TasksPage() {
               variant="primary"
               icon={FiPlus}
               onClick={() => {
-                console.log('New Task button clicked, setting modal open to true');
-                setIsCreateModalOpen(true);
-                console.log('Modal state should now be:', true);
+                console.log('New Task button clicked - navigating to /tasks/new');
+                router.push('/tasks/new');
               }}
             >
               New Task
@@ -95,7 +85,7 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
@@ -111,7 +101,7 @@ export default function TasksPage() {
               <Button
                 variant="primary"
                 icon={FiPlus}
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => router.push('/tasks/new')}
               >
                 Create Task
               </Button>
@@ -125,22 +115,5 @@ export default function TasksPage() {
           </div>
         )}
       </div>
-
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={handleCloseModal}
-        title={editingTask ? 'Edit Task' : 'Create New Task'}
-        size="lg"
-      >
-        <div>
-          <p>DEBUG: Modal is open, isCreateModalOpen = {isCreateModalOpen.toString()}</p>
-          <TaskForm 
-            task={editingTask} 
-            onSuccess={handleCreateSuccess} 
-            onCancel={handleCloseModal} 
-          />
-        </div>
-      </Modal>
-    </DashboardLayout>
   );
 }
