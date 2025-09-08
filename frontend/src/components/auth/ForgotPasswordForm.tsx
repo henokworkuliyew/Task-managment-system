@@ -32,7 +32,7 @@ export default function ForgotPasswordForm() {
       
       if (forgotPassword.fulfilled.match(resultAction)) {
         toast.success('Password reset instructions have been sent to your email.');
-        router.push('/auth/verify-otp');
+        // Don't redirect - let user check their email for the reset link
       } else if (forgotPassword.rejected.match(resultAction)) {
         toast.error(resultAction.payload as string || 'Failed to process your request. Please try again.');
       }
@@ -48,14 +48,20 @@ export default function ForgotPasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-2 text-center text-gray-800">
-        Forgot Password
-      </h2>
-      <p className="text-center text-gray-600 mb-6">
-        Enter your email address and we&apos;ll send you instructions to reset
-        your password.
-      </p>
+    <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+      <div className="text-center mb-8">
+        <div className="mx-auto h-16 w-16 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mb-4">
+          <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-3.586l4.293-4.293a1 1 0 011.414 0L10 14l4-4.293a1 1 0 011.414 0L17 11V9a2 2 0 012-2z" />
+          </svg>
+        </div>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          Forgot Password?
+        </h2>
+        <p className="text-gray-600">
+          No worries! Enter your email address and we&apos;ll send you instructions to reset your password.
+        </p>
+      </div>
 
       <Formik
         initialValues={initialValues}
@@ -63,11 +69,11 @@ export default function ForgotPasswordForm() {
         onSubmit={handleSubmit}
       >
         {({ isSubmitting: formikSubmitting }) => (
-          <Form className="space-y-4">
+          <Form className="space-y-6">
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-semibold text-gray-700 mb-2"
               >
                 Email Address
               </label>
@@ -75,13 +81,13 @@ export default function ForgotPasswordForm() {
                 type="email"
                 id="email"
                 name="email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your email"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                placeholder="Enter your email address"
               />
               <ErrorMessage
                 name="email"
                 component="div"
-                className="mt-1 text-sm text-red-600"
+                className="mt-2 text-sm text-red-500 font-medium"
               />
             </div>
 
@@ -89,19 +95,27 @@ export default function ForgotPasswordForm() {
               <button
                 type="submit"
                 disabled={isSubmitting || formikSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-base font-semibold text-white bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                {isSubmitting ? 'Sending...' : 'Send Reset Instructions'}
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Sending Instructions...
+                  </>
+                ) : 'Send Reset Instructions'}
               </button>
             </div>
 
-            <div className="text-center mt-4">
+            <div className="text-center mt-6">
               <p className="text-sm text-gray-600">
                 Remember your password?{' '}
                 <button
                   type="button"
                   onClick={() => router.push('/auth/login')}
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                  className="font-semibold text-blue-600 hover:text-blue-500 underline transition-colors"
                 >
                   Back to Login
                 </button>
