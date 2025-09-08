@@ -17,8 +17,7 @@ export interface ForgotPasswordData {
 
 export interface ResetPasswordData {
   token: string;
-  password: string;
-  confirmPassword: string;
+  newPassword: string;
 }
 
 export interface VerifyOtpData {
@@ -39,11 +38,17 @@ export interface AuthResponse {
     avatar?: string;
     bio?: string;
     skills?: string[];
-    availability?: Record<string, any>;
+    availability?: Record<string, unknown>;
     isActive: boolean;
   };
   accessToken: string;
   refreshToken: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  email: string;
+  name: string;
 }
 
 const authService = {
@@ -54,9 +59,9 @@ const authService = {
   },
 
 
-  register: async (userData: RegisterData) => {
-    const response = await api.post<{success: boolean, data: AuthResponse, timestamp: string}>('/auth/register', userData);
-    return response.data.data; // Extract the actual auth data from the wrapped response
+  register: async (userData: RegisterData): Promise<RegisterResponse> => {
+    const response = await api.post<RegisterResponse>('/auth/register', userData);
+    return response.data;
   },
 
   
@@ -101,8 +106,18 @@ const authService = {
   },
 
   
-  updateProfile: async (data: Partial<any>) => {
+  updateProfile: async (data: Partial<Record<string, unknown>>) => {
     const response = await api.patch('/auth/profile', data);
+    return response.data;
+  },
+
+  verifyEmail: async (token: string) => {
+    const response = await api.post('/auth/verify-email', { token });
+    return response.data;
+  },
+
+  resendVerificationEmail: async (email: string) => {
+    const response = await api.post('/auth/resend-verification', { email });
     return response.data;
   },
 };
