@@ -1,23 +1,27 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { issueService } from '../../services';
 import { IssueState, Issue, Priority } from '../../types';
+import { getStoredState, setStoredState, STORAGE_KEYS } from '../../utils/localStorage';
 
 interface CreateIssueData {
   title: string;
-  description?: string;
-  priority?: Priority;
+  description: string;
   projectId: string;
   taskId?: string;
-  reporterId?: string;
-  assigneeId?: string;
+  assignedTo?: string;
+  priority: 'low' | 'medium' | 'high';
+  severity: 'minor' | 'major' | 'critical';
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
 }
 
 interface UpdateIssueData {
   title?: string;
   description?: string;
-  priority?: Priority;
-  status?: string;
-  assigneeId?: string;
+  priority?: 'low' | 'medium' | 'high';
+  severity?: 'minor' | 'major' | 'critical';
+  status?: 'open' | 'in_progress' | 'resolved' | 'closed';
+  assignedTo?: string;
+  id: string;
 }
 
 interface IssueQueryParams {
@@ -35,7 +39,7 @@ interface IssueQueryParams {
 }
 
 const initialState: IssueState = {
-  issues: [],
+  issues: getStoredState(STORAGE_KEYS.ISSUES) || [],
   currentIssue: null,
   isLoading: false,
   error: null,
@@ -51,8 +55,9 @@ export const fetchIssues = createAsyncThunk<{ data: Issue[]; totalCount: number 
         data: issues,
         totalCount: issues.length
       };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch issues');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch issues';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -63,8 +68,9 @@ export const fetchIssueById = createAsyncThunk(
     try {
       const issue = await issueService.getIssueById(id);
       return issue;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch issue');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch issue';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -73,10 +79,11 @@ export const createIssue = createAsyncThunk(
   'issues/createIssue',
   async (data: CreateIssueData, { rejectWithValue }) => {
     try {
-      const issue = await issueService.createIssue(data as any);
+      const issue = await issueService.createIssue(data);
       return issue;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to create issue');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create issue';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -85,10 +92,11 @@ export const updateIssue = createAsyncThunk(
   'issues/updateIssue',
   async ({ id, data }: { id: string; data: UpdateIssueData }, { rejectWithValue }) => {
     try {
-      const issue = await issueService.updateIssue({ id, ...data as any });
+      const issue = await issueService.updateIssue({ ...data, id });
       return issue;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update issue');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update issue';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -99,8 +107,9 @@ export const deleteIssue = createAsyncThunk(
     try {
       await issueService.deleteIssue(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to delete issue');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete issue';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -124,8 +133,13 @@ const issueSlice = createSlice({
     });
     builder.addCase(fetchIssues.fulfilled, (state, action: PayloadAction<{ data: Issue[]; totalCount: number }>) => {
       state.isLoading = false;
-      state.issues = action.payload.data;
-      state.totalCount = action.payload.totalCount;
+      // Only update if we actually received data
+      if (action.payload.data && Array.isArray(action.payload.data)) {
+        state.issues = action.payload.data;
+        state.totalCount = action.payload.totalCount;
+        // Persist to localStorage
+        setStoredState(STORAGE_KEYS.ISSUES, action.payload.data);
+      }
     });
     builder.addCase(fetchIssues.rejected, (state, action) => {
       state.isLoading = false;
@@ -153,8 +167,22 @@ const issueSlice = createSlice({
     });
     builder.addCase(createIssue.fulfilled, (state, action: PayloadAction<Issue>) => {
       state.isLoading = false;
-      state.issues = [...state.issues, action.payload];
-      state.totalCount += 1;
+      // Ensure state.issues is an array before adding new issue
+      if (Array.isArray(state.issues)) {
+        // Check if issue already exists to avoid duplicates
+        const existingIssue = state.issues.find(i => i.id === action.payload.id);
+        if (!existingIssue) {
+          state.issues.push(action.payload);
+          state.totalCount += 1;
+          // Persist to localStorage
+          setStoredState(STORAGE_KEYS.ISSUES, state.issues);
+        }
+      } else {
+        state.issues = [action.payload];
+        state.totalCount = 1;
+        // Persist to localStorage
+        setStoredState(STORAGE_KEYS.ISSUES, state.issues);
+      }
     });
     builder.addCase(createIssue.rejected, (state, action) => {
       state.isLoading = false;
