@@ -1,10 +1,9 @@
 import {
   Injectable,
+  ConflictException,
   UnauthorizedException,
   BadRequestException,
-  ConflictException,
-  Inject,
-  Optional,
+  NotFoundException,
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
@@ -15,6 +14,7 @@ import { Queue } from 'bull'
 import * as bcrypt from 'bcrypt'
 import * as crypto from 'crypto'
 import { User } from '../../entities/user.entity' // Changed from type import to regular import for decorator usage
+import { PendingRegistration } from '../../entities/pending-registration.entity'
 import type { RegisterDto } from './dtos/register.dto'
 import type { LoginDto } from './dtos/login.dto'
 import { EmailService } from './email.service'
@@ -24,6 +24,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(PendingRegistration)
+    private readonly pendingRegistrationRepository: Repository<PendingRegistration>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService
@@ -32,7 +34,6 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     const { email, password, name } = registerDto
 
-    // Check if user already exists
     const existingUser = await this.userRepository.findOne({
       where: { email },
     })
@@ -41,81 +42,78 @@ export class AuthService {
       throw new ConflictException('User with this email already exists')
     }
 
-    // Hash password
+    const existingPending = await this.pendingRegistrationRepository.findOne({
+      where: { email },
+    })
+
+    if (existingPending) {
+      await this.pendingRegistrationRepository.remove(existingPending)
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user
-    const user = this.userRepository.create({
+    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+
+    const pendingRegistration = this.pendingRegistrationRepository.create({
       email,
       password: hashedPassword,
       name,
+      otpCode: otp,
+      otpExpires,
     })
 
-    const savedUser = await this.userRepository.save(user)
+    const savedPending = await this.pendingRegistrationRepository.save(pendingRegistration)
 
-    // Generate tokens
-    const tokens = await this.generateTokens(savedUser)
-
-    // Save refresh token
-    await this.updateRefreshToken(savedUser.id, tokens.refreshToken)
-
-    // Send welcome email
     try {
       if (this.emailService) {
-        await this.emailService.add('welcome', {
-          email: savedUser.email,
-          name: savedUser.name,
+        await this.emailService.add('otp', {
+          email: savedPending.email,
+          name: savedPending.name,
+          otp,
         });
-      } else {
-        console.log(`Mock email would be sent to ${savedUser.email} with type: welcome`);
       }
     } catch (error) {
-      // Log the error but don't fail the registration process
-      console.error('Failed to send welcome email:', error.message);
+      console.error('Failed to send OTP email:', error.message);
+      console.log(`🔐 FALLBACK - OTP for ${savedPending.email}: ${otp}`);
     }
 
     return {
-      user: this.sanitizeUser(savedUser),
-      ...tokens,
+      message: 'Registration initiated. Please verify your email with the OTP sent to your email address to complete registration.',
+      email: savedPending.email,
+      name: savedPending.name
     }
   }
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto
 
-    // Find user with password
     const user = await this.userRepository.findOne({
       where: { email, isActive: true },
-      select: ['id', 'email', 'password', 'name', 'role', 'avatar'],
+      select: ['id', 'email', 'password', 'name', 'role', 'avatar', 'isEmailVerified'],
     })
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials')
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password)
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials')
     }
 
-    // Generate tokens
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedException('Please verify your email address before logging in')
+    }
+
     const tokens = await this.generateTokens(user)
 
-    // Save refresh token
     await this.updateRefreshToken(user.id, tokens.refreshToken)
 
     const response = {
       user: this.sanitizeUser(user),
       ...tokens,
     }
-
-    console.log('Auth Service - Login response structure:', {
-      hasUser: !!response.user,
-      hasAccessToken: !!response.accessToken,
-      hasRefreshToken: !!response.refreshToken,
-      responseKeys: Object.keys(response)
-    })
 
     return response
   }
@@ -124,21 +122,17 @@ export class AuthService {
     const user = await this.userRepository.findOne({ where: { email } })
 
     if (!user) {
-      // Don't reveal if user exists
       return { message: 'If the email exists, a reset link has been sent' }
     }
 
-    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex')
     const resetTokenExpires = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
 
-    // Save reset token
     await this.userRepository.update(user.id, {
       resetPasswordToken: resetToken,
       resetPasswordExpires: resetTokenExpires,
     })
 
-    // Send reset email
     await this.emailService.add('password-reset', {
       email: user.email,
       name: user.name,
@@ -159,10 +153,8 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired reset token')
     }
 
-    // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 12)
 
-    // Update password and clear reset token
     await this.userRepository.update(user.id, {
       password: hashedPassword,
       resetPasswordToken: null,
@@ -174,48 +166,128 @@ export class AuthService {
   }
 
   async generateOtp(email: string) {
-    const user = await this.userRepository.findOne({ where: { email } })
+    const pendingRegistration = await this.pendingRegistrationRepository.findOne({ 
+      where: { email } 
+    })
 
-    if (!user) {
-      throw new BadRequestException('User not found')
+    if (!pendingRegistration) {
+      throw new BadRequestException('No pending registration found for this email')
     }
 
-    // Generate 6-digit OTP
+    // Generate new 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
-    const otpExpires = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
 
-    // Save OTP
-    await this.userRepository.update(user.id, {
+    // Update pending registration with new OTP
+    await this.pendingRegistrationRepository.update(pendingRegistration.id, {
       otpCode: otp,
       otpExpires,
     })
 
     // Send OTP email
     await this.emailService.add('otp', {
-      email: user.email,
-      name: user.name,
+      email: pendingRegistration.email,
+      name: pendingRegistration.name,
       otp,
     })
 
-    return { message: 'OTP sent to your email' }
+    return { message: 'New OTP sent to your email' }
   }
 
   async verifyOtp(email: string, otp: string) {
-    const user = await this.userRepository.findOne({
+    // Find pending registration by email
+    const pendingRegistration = await this.pendingRegistrationRepository.findOne({
       where: { email },
     })
 
-    if (!user || user.otpCode !== otp || user.otpExpires < new Date()) {
-      throw new BadRequestException('Invalid or expired OTP')
+    if (!pendingRegistration) {
+      throw new NotFoundException('No pending registration found for this email')
     }
 
-    // Clear OTP
-    await this.userRepository.update(user.id, {
-      otpCode: null,
-      otpExpires: null,
+    // Check if OTP is valid and not expired
+    if (pendingRegistration.otpCode !== otp) {
+      throw new BadRequestException('Invalid OTP')
+    }
+
+    if (pendingRegistration.otpExpires < new Date()) {
+      throw new BadRequestException('OTP has expired')
+    }
+
+    // Create the actual user now that OTP is verified
+    const user = this.userRepository.create({
+      email: pendingRegistration.email,
+      password: pendingRegistration.password,
+      name: pendingRegistration.name,
+      isEmailVerified: true,
     })
 
-    return { message: 'OTP verified successfully' }
+    const savedUser = await this.userRepository.save(user)
+
+    // Remove the pending registration
+    await this.pendingRegistrationRepository.remove(pendingRegistration)
+
+
+    return {
+      message: 'Registration completed successfully. You can now login.',
+      user: {
+        id: savedUser.id,
+        email: savedUser.email,
+        name: savedUser.name,
+        isEmailVerified: true,
+      },
+    }
+  }
+
+  async verifyEmail(token: string) {
+    const user = await this.userRepository.findOne({
+      where: {
+        emailVerificationToken: token,
+      },
+    })
+
+    if (!user || user.emailVerificationExpires < new Date()) {
+      throw new BadRequestException('Invalid or expired verification token')
+    }
+
+    // Mark email as verified and clear verification token
+    await this.userRepository.update(user.id, {
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
+    })
+
+    return { message: 'Email verified successfully' }
+  }
+
+  async resendVerificationEmail(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } })
+
+    if (!user) {
+      throw new BadRequestException('User not found')
+    }
+
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email is already verified')
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex')
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    // Save new verification token
+    await this.userRepository.update(user.id, {
+      emailVerificationToken: verificationToken,
+      emailVerificationExpires: verificationExpires,
+    })
+
+    // Send verification email
+    await this.emailService.add('email-verification', {
+      email: user.email,
+      name: user.name,
+      verificationToken,
+    })
+
+    return { message: 'Verification email sent' }
   }
 
   async refreshToken(refreshToken: string) {
@@ -253,8 +325,6 @@ export class AuthService {
       role: user.role,
     }
 
-    console.log('Auth Service - Generating tokens for payload:', payload)
-
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, {
@@ -263,8 +333,6 @@ export class AuthService {
           this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d',
       }),
     ])
-
-    console.log('Auth Service - Tokens generated successfully')
 
     return {
       accessToken,
@@ -290,19 +358,15 @@ export class AuthService {
     return sanitized
   }
 
-  async validateUser(payload: any): Promise<User> {
-    console.log('Auth Service - Validating user with payload:', payload)
-    
+  async validateUser(payload: { sub: string; email: string; role: string }): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id: payload.sub, isActive: true },
     })
 
     if (!user) {
-      console.log('Auth Service - User not found or inactive for ID:', payload.sub)
       throw new UnauthorizedException()
     }
 
-    console.log('Auth Service - User found and active:', user.id, user.email)
     return user
   }
 }
