@@ -10,12 +10,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
   ) {
+    const jwtSecret = configService.get<string>("JWT_SECRET") || "fallback-secret-for-development-only-change-in-production";
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>("JWT_SECRET"),
+      secretOrKey: jwtSecret,
     })
-    console.log('JWT Strategy initialized with secret:', configService.get<string>("JWT_SECRET") ? 'SECRET_SET' : 'SECRET_MISSING')
+    console.log('JWT Strategy initialized with secret:', jwtSecret !== "fallback-secret-for-development-only-change-in-production" ? 'SECRET_SET' : 'FALLBACK_SECRET_USED')
   }
 
   async validate(payload: any) {
