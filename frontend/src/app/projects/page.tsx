@@ -1,23 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { fetchProjects } from '../../redux/slices/projectSlice';
-import { DashboardLayout } from '../../components/layout';
-import { ProjectCard, ProjectForm } from '../../components/projects';
-import { Button, Card, Modal } from '../../components/common';
+import { ProjectCard } from '../../components/projects';
+import { Button, Card } from '../../components/common';
 import { FiPlus, FiFilter } from 'react-icons/fi';
 import { Project } from '@/types';
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
-  const { projects, loading } = useAppSelector((state) => state.projects);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { projects, isLoading } = useAppSelector((state) => state.projects);
   const [filterPriority, setFilterPriority] = useState<string>('');
 
   useEffect(() => {
-    dispatch(fetchProjects({}));
-  }, [dispatch]);
+    // Smart fetching: only fetch if we don't have data already (like social media apps)
+    if (!Array.isArray(projects) || projects.length === 0) {
+      dispatch(fetchProjects({}));
+    }
+  }, [dispatch, projects]);
 
   const filteredProjects = Array.isArray(projects) 
     ? (filterPriority
@@ -25,13 +28,11 @@ export default function ProjectsPage() {
         : projects)
     : [];
 
-  const handleCreateSuccess = () => {
-    setIsCreateModalOpen(false);
-    dispatch(fetchProjects({}));
-  };
+  // const handleCreateSuccess = () => {
+  //   // No need to refetch - Redux will update automatically when project is created
+  // };
 
   return (
-    <DashboardLayout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Projects</h1>
@@ -53,8 +54,8 @@ export default function ProjectsPage() {
               variant="primary"
               icon={FiPlus}
               onClick={() => {
-                console.log('New Project button clicked');
-                setIsCreateModalOpen(true);
+                console.log('New Project button clicked - navigating to /projects/new');
+                router.push('/projects/new');
               }}
             >
               New Project
@@ -62,7 +63,7 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
@@ -78,7 +79,7 @@ export default function ProjectsPage() {
               <Button
                 variant="primary"
                 icon={FiPlus}
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => router.push('/projects/new')}
               >
                 Create Project
               </Button>
@@ -92,19 +93,5 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
-
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={() => {
-          console.log('Modal closing');
-          setIsCreateModalOpen(false);
-        }}
-        title="Create New Project"
-        size="lg"
-      >
-        <ProjectForm onSuccess={handleCreateSuccess} onCancel={() => setIsCreateModalOpen(false)} />
-      </Modal>
-      
-    </DashboardLayout>
   );
 }
