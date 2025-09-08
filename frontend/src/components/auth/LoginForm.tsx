@@ -60,8 +60,18 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md p-6 bg-gray-800 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Login to Your Account</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+          <div className="text-center mb-8">
+            <div className="mx-auto h-16 w-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-4">
+              <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+            <p className="text-gray-600">Sign in to your account to continue</p>
+          </div>
       
       <Formik
         initialValues={initialValues}
@@ -69,23 +79,23 @@ export default function LoginForm() {
         onSubmit={handleSubmit}
       >
         {({ isSubmitting: formikSubmitting }) => (
-          <Form className="space-y-4">
+          <Form className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
                 Email Address
               </label>
               <Field
                 type="email"
                 id="email"
                 name="email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your email"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                placeholder="Enter your email address"
               />
-              <ErrorMessage name="email" component="div" className="mt-1 text-sm text-red-600" />
+              <ErrorMessage name="email" component="div" className="mt-2 text-sm text-red-500 font-medium" />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -93,12 +103,12 @@ export default function LoginForm() {
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-blue-600 transition-colors"
                   onClick={togglePasswordVisibility}
                 >
                   {showPassword ? (
@@ -108,7 +118,7 @@ export default function LoginForm() {
                   )}
                 </button>
               </div>
-              <ErrorMessage name="password" component="div" className="mt-1 text-sm text-red-600" />
+              <ErrorMessage name="password" component="div" className="mt-2 text-sm text-red-500 font-medium" />
             </div>
 
             <div className="flex items-center justify-between">
@@ -127,7 +137,7 @@ export default function LoginForm() {
                 <button
                   type="button"
                   onClick={() => router.push('/auth/forgot-password')}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-500"
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-500 underline transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -138,27 +148,37 @@ export default function LoginForm() {
               <button
                 type="submit"
                 disabled={isSubmitting || formikSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                {isSubmitting ? 'Signing in...' : 'Sign in'}
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing in...
+                  </>
+                ) : 'Sign In'}
               </button>
             </div>
 
-            <div className="text-center mt-4">
+            <div className="text-center mt-6">
               <p className="text-sm text-gray-600">
                 Don&apos;t have an account?{' '}
                 <button
                   type="button"
                   onClick={() => router.push('/auth/register')}
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                  className="font-semibold text-blue-600 hover:text-blue-500 underline transition-colors"
                 >
-                  Sign up
+                  Create account
                 </button>
               </p>
             </div>
           </Form>
         )}
       </Formik>
+        </div>
+      </div>
     </div>
   );
 }
