@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '../../redux/hooks';
 import { Notification } from '../../types';
 import { markAsRead } from '../../redux/slices/notificationSlice';
 import { FiCheck, FiClock, FiBell } from 'react-icons/fi';
@@ -13,19 +13,23 @@ interface NotificationItemProps {
 }
 
 const NotificationItem = ({ notification }: NotificationItemProps) => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [isMarking, setIsMarking] = useState(false);
   
   const { id, message, type, createdAt, read } = notification;
 
   const getTypeIcon = () => {
     switch (type) {
-      case 'task':
+      case 'task_assigned':
+      case 'task_updated':
         return <FiClock className="text-blue-500" />;
-      case 'project':
+      case 'project_member_added':
         return <FiBell className="text-green-500" />;
-      case 'issue':
-        return <FiBell className="text-red-500" />;
+      case 'comment_added':
+      case 'mention':
+        return <FiBell className="text-purple-500" />;
+      case 'deadline_reminder':
+        return <FiClock className="text-orange-500" />;
       default:
         return <FiBell className="text-gray-500" />;
     }
@@ -54,7 +58,7 @@ const NotificationItem = ({ notification }: NotificationItemProps) => {
     
     try {
       setIsMarking(true);
-      await dispatch(markAsRead(id) as any);
+      await dispatch(markAsRead(id));
     } catch (error) {
       console.error('Error marking notification as read:', error);
     } finally {
