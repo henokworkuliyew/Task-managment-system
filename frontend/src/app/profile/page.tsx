@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { RootState } from '../../types';
 import { updateProfile } from '../../redux/slices/authSlice';
 import { DashboardLayout } from '../../components/layout';
 import { Button, Card } from '../../components/common';
@@ -19,7 +20,7 @@ const ProfileSchema = Yup.object().shape({
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
-  const { user, loading } = useAppSelector((state) => state.auth);
+  const { user, isLoading } = useAppSelector((state: RootState) => state.auth);
   const [updateSuccess, setUpdateSuccess] = useState(false);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function ProfilePage() {
     );
   }
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: { name: string; email: string; phone?: string; jobTitle?: string; department?: string }) => {
     try {
       await dispatch(updateProfile(values));
       setUpdateSuccess(true);
@@ -63,8 +64,8 @@ export default function ProfilePage() {
                   <FiUser className="w-16 h-16 text-gray-400" />
                 </div>
                 <h2 className="text-xl font-semibold">{user.name}</h2>
-                <p className="text-gray-500">{user.jobTitle || 'No job title'}</p>
-                <p className="text-gray-500">{user.department || 'No department'}</p>
+                {/* <p className="text-gray-500">{user.jobTitle || 'No job title'}</p>
+                <p className="text-gray-500">{user.department || 'No department'}</p> */}
               </div>
             </Card>
           </div>
@@ -81,9 +82,9 @@ export default function ProfilePage() {
                 initialValues={{
                   name: user.name || '',
                   email: user.email || '',
-                  phone: user.phone || '',
-                  jobTitle: user.jobTitle || '',
-                  department: user.department || '',
+                  // phone: user.phone || '',
+                  // jobTitle: user.jobTitle || '',
+                  // department: user.department || '',
                 }}
                 validationSchema={ProfileSchema}
                 onSubmit={handleSubmit}
@@ -173,8 +174,8 @@ export default function ProfilePage() {
                         type="submit"
                         variant="primary"
                         icon={FiSave}
-                        disabled={isSubmitting || loading}
-                        isLoading={isSubmitting || loading}
+                        disabled={isSubmitting || isLoading}
+                        isLoading={isSubmitting || isLoading}
                       >
                         Save Changes
                       </Button>
