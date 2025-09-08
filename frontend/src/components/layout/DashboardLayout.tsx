@@ -3,8 +3,7 @@
 import { ReactNode, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../redux/store';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logout } from '../../redux/slices/authSlice';
 import { FiMenu, FiX, FiHome, FiFolder, FiCheckSquare, FiAlertCircle, FiBell, FiUser, FiLogOut } from 'react-icons/fi';
 
@@ -15,12 +14,12 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouter();
-  const dispatch = useDispatch();
-  const { user } = useSelector((state: RootState) => state.auth);
-  const { unreadCount } = useSelector((state: RootState) => state.notifications);
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { unreadCount } = useAppSelector((state) => state.notifications);
 
   const handleLogout = async () => {
-    await dispatch(logout() as any);
+    await dispatch(logout());
     router.push('/auth/login');
   };
 
@@ -72,11 +71,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white">
-                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                {user?.name?.charAt(0)}
               </div>
               {sidebarOpen && (
                 <div className="ml-3">
-                  <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-sm font-medium">{user?.name}</p>
                   <p className="text-xs text-gray-500">{user?.email}</p>
                 </div>
               )}
