@@ -7,7 +7,7 @@ import { useAppSelector } from '../redux/hooks';
 export default function Home() {
   const router = useRouter();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
-
+  console.log("isAuthenticated",isAuthenticated);
   useEffect(() => {
     if (isAuthenticated) {
       router.push('/dashboard');
