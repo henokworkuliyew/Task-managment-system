@@ -2,7 +2,7 @@ import { Controller, Post, HttpCode, HttpStatus, UseGuards, Body, Inject, Reques
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger"
 import { ThrottlerGuard } from "@nestjs/throttler"
 
-import { AuthService } from "./auth.service"
+import { AuthService } from './auth.service'
 import { Public } from "../../common/decorators/public.decorator"
 import { RegisterDto } from "./dtos/register.dto"
 import { LoginDto } from "./dtos/login.dto"
@@ -10,6 +10,8 @@ import { ForgotPasswordDto } from "./dtos/forgot-password.dto"
 import { ResetPasswordDto } from "./dtos/reset-password.dto"
 import { RefreshTokenDto } from "./dtos/refresh-token.dto"
 import { VerifyOtpDto } from "./dtos/verify-otp.dto"
+import { VerifyEmailDto } from "./dtos/verify-email.dto"
+import { ResendVerificationDto } from "./dtos/resend-verification.dto"
 
 @ApiTags("auth")
 @Controller("auth")
@@ -66,6 +68,35 @@ export class AuthController {
   }
 
   @Public()
+  @Post("generate-otp")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Generate and send OTP" })
+  @ApiResponse({ status: 200, description: "OTP sent successfully" })
+  async generateOtp(@Body() body: { email: string }) {
+    return this.authService.generateOtp(body.email)
+  }
+
+  @Public()
+  @Post("verify-email")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Verify email address" })
+  @ApiResponse({ status: 200, description: "Email successfully verified" })
+  @ApiResponse({ status: 400, description: "Invalid or expired token" })
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto.token)
+  }
+
+  @Public()
+  @Post("resend-verification")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Resend email verification" })
+  @ApiResponse({ status: 200, description: "Verification email sent" })
+  @ApiResponse({ status: 400, description: "User not found or email already verified" })
+  async resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
+    return this.authService.resendVerificationEmail(resendVerificationDto.email)
+  }
+
+  @Public()
   @Post("refresh")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Refresh access token" })
@@ -87,4 +118,5 @@ export class AuthController {
     // If no user ID, just return success (token is already invalid)
     return { message: "Logged out successfully" };
   }
+
 }
