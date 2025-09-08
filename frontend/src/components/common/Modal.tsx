@@ -12,7 +12,6 @@ interface ModalProps {
 }
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) => {
-  console.log('Modal rendered with isOpen:', isOpen, 'title:', title);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,22 +75,20 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
         <div
           ref={modalRef}
           className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle ${getSizeClasses()} w-full`}
-          style={{ minHeight: '200px', border: '2px solid red' }}
         >
           {title && (
             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-medium text-gray-800">{title}</h3>
+              <h3 className="text-lg font-medium text-gray-900">{title}</h3>
               <button
                 type="button"
-                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md p-1"
                 onClick={onClose}
               >
                 <FiX className="w-5 h-5" />
               </button>
             </div>
           )}
-          <div className="px-6 py-4" style={{ backgroundColor: 'lightblue', minHeight: '100px' }}>
-            <div>DEBUG: Modal content area</div>
+          <div className="px-6 py-4">
             {children}
           </div>
         </div>
