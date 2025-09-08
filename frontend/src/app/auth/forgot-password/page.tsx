@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ForgotPasswordForm } from '../../../components/auth';
 import { useAppSelector } from '../../../redux/hooks';
+import { RootState } from '../../../redux/store';
 
 export default function ForgotPasswordPage() {
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated } = useAppSelector((state: RootState) => state.auth);
   const router = useRouter();
 
   useEffect(() => {
