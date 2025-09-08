@@ -7,7 +7,7 @@ export interface User {
   avatar?: string;
   bio?: string;
   skills?: string[];
-  availability?: Record<string, any>;
+  availability?: Record<string, unknown>;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -30,6 +30,7 @@ export interface Project {
   startDate: string | null;
   endDate: string | null;
   priority: 'low' | 'medium' | 'high';
+  status: 'not_started' | 'in_progress' | 'completed' | 'on_hold';
   tags: string[] | null;
   progress: number;
   isActive: boolean;
@@ -51,6 +52,42 @@ export interface ProjectState {
 export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'review' | 'done';
 export type Priority = 'low' | 'medium' | 'high';
 
+export interface Comment {
+  id: string;
+  content: string;
+  mentions: string[] | null;
+  attachments: string[] | null;
+  isEdited: boolean;
+  author: User;
+  authorId: string;
+  project: Project | null;
+  projectId: string | null;
+  task: Task | null;
+  taskId: string | null;
+  issue: Issue | null;
+  issueId: string | null;
+  parentComment: Comment | null;
+  parentCommentId: string | null;
+  replies: Comment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TimeLog {
+  id: string;
+  startTime: string;
+  endTime: string | null;
+  duration: number | null;
+  description: string | null;
+  isRunning: boolean;
+  user: User;
+  userId: string;
+  task: Task;
+  taskId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -58,15 +95,22 @@ export interface Task {
   status: TaskStatus;
   priority: Priority;
   progress: number;
-  dueDate: string | null;
-  startDate: string | null;
-  completedDate: string | null;
+  deadline: string | null;
   estimatedHours: number | null;
+  tags: string[] | null;
+  attachments: string[] | null;
+  isActive: boolean;
   assignee: User | null;
+  assigneeId: string | null;
   project: Project;
+  projectId: string;
   parentTask: Task | null;
+  parentTaskId: string | null;
   subtasks: Task[];
   dependencies: Task[];
+  dependentTasks: Task[];
+  comments: Comment[];
+  timeLogs: TimeLog[];
   createdAt: string;
   updatedAt: string;
 }
@@ -87,15 +131,27 @@ export type IssueType = 'bug' | 'feature' | 'improvement' | 'task';
 export interface Issue {
   id: string;
   title: string;
-  description: string | null;
+  description: string;
   status: IssueStatus;
-  priority: IssuePriority;
-  type: IssueType;
+  severity: 'minor' | 'major' | 'critical';
+  priority?: IssuePriority;
+  type?: IssueType;
+  attachments: string[] | null;
+  stepsToReproduce: string | null;
+  expectedBehavior: string | null;
+  actualBehavior: string | null;
+  tags: string[] | null;
+  isActive: boolean;
+  resolvedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  reportedBy: User;
-  assignedTo: User | null;
+  assignee: User | null;
+  assigneeId: string | null;
+  reporter: User;
+  reporterId: string;
+  project: Project;
   projectId: string;
+  comments: Comment[];
 }
 
 export interface IssueState {
@@ -112,13 +168,14 @@ export interface Notification {
   type: string;
   message: string;
   read: boolean;
-  data: any;
+  data: Record<string, unknown>;
   createdAt: string;
 }
 
 export interface NotificationState {
   notifications: Notification[];
   unreadCount: number;
+  totalCount: number;
   isLoading: boolean;
   error: string | null;
 }
