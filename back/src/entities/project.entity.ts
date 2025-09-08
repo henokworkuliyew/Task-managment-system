@@ -41,6 +41,13 @@ export class Project {
   })
   priority: Priority
 
+  @Column({
+    type: 'enum',
+    enum: ['not_started', 'in_progress', 'completed', 'on_hold'],
+    default: 'not_started',
+  })
+  status: string
+
   @Column('simple-array', { nullable: true })
   tags: string[]
 
