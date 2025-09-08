@@ -72,6 +72,15 @@ export class User {
   @Column({ nullable: true })
   otpExpires: Date
 
+  @Column({ default: false })
+  isEmailVerified: boolean
+
+  @Column({ nullable: true })
+  emailVerificationToken: string
+
+  @Column({ nullable: true })
+  emailVerificationExpires: Date
+
   @CreateDateColumn()
   createdAt: Date
 
