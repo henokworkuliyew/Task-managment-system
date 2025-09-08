@@ -1,6 +1,24 @@
-import api from '../services/api';
 import authService from '../services/authService';
 import { AxiosInstance, AxiosRequestConfig } from 'axios';
+
+// Queue for failed requests during token refresh
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
 
 /**
  * Helper function to safely get tokens from localStorage
@@ -12,11 +30,11 @@ const getStoredToken = (tokenType: 'accessToken' | 'refreshToken'): string | nul
   const token = localStorage.getItem(tokenType);
   
   // Check if token is valid (not null, undefined, or string representations of these)
-  if (!token || token === 'null' || token === 'undefined') {
+  if (!token || token === 'null' || token === 'undefined' || token.trim() === '') {
     return null;
   }
   
-  return token;
+  return token.trim();
 };
 
 /**
@@ -27,12 +45,8 @@ export const setupInterceptors = (api: AxiosInstance): void => {
   api.interceptors.request.use(
     (config) => {
       const token = getStoredToken('accessToken');
-      console.log('API Interceptor - Token from storage:', token ? 'TOKEN_FOUND' : 'TOKEN_MISSING');
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
-        console.log('API Interceptor - Authorization header set');
-      } else {
-        console.log('API Interceptor - No token available, skipping Authorization header');
       }
       return config;
     },
@@ -71,25 +85,22 @@ export const setupInterceptors = (api: AxiosInstance): void => {
           const refreshToken = getStoredToken('refreshToken');
           
           if (!refreshToken) {
-            // No valid refresh token available, logout and redirect to login
-            console.error('No valid refresh token available');
+            // No valid refresh token available, clear everything
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             processQueue(error, null);
             isRefreshing = false;
-            if (typeof window !== 'undefined') {
-              window.location.href = '/auth/login';
+            
+            // Dispatch logout action to clear Redux state
+            if (typeof window !== 'undefined' && (window as typeof window & { __REDUX_STORE__: { dispatch: (action: { type: string }) => void } }).__REDUX_STORE__) {
+              (window as typeof window & { __REDUX_STORE__: { dispatch: (action: { type: string }) => void } }).__REDUX_STORE__.dispatch({ type: 'auth/logout/fulfilled' });
             }
+            
             return Promise.reject(error);
           }
           
-          console.log('Attempting to refresh token');
-          
           const tokenResponse = await authService.refreshToken(refreshToken);
-          
           const { accessToken, refreshToken: newRefreshToken } = tokenResponse;
-          
-          console.log('Token refreshed successfully');
           
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', newRefreshToken);
@@ -104,16 +115,17 @@ export const setupInterceptors = (api: AxiosInstance): void => {
           
           return api(originalRequest);
         } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          // Clear tokens and redirect to login
+          // Clear tokens and Redux state
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           processQueue(refreshError, null);
           isRefreshing = false;
           
-          if (typeof window !== 'undefined') {
-            window.location.href = '/auth/login';
+          // Dispatch logout action to clear Redux state
+          if (typeof window !== 'undefined' && (window as typeof window & { __REDUX_STORE__: { dispatch: (action: { type: string }) => void } }).__REDUX_STORE__) {
+            (window as typeof window & { __REDUX_STORE__: { dispatch: (action: { type: string }) => void } }).__REDUX_STORE__.dispatch({ type: 'auth/logout/fulfilled' });
           }
+          
           return Promise.reject(refreshError);
         }
       }
