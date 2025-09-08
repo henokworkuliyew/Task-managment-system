@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
+import { RootState } from '../../redux/store';
 import { fetchProjects } from '../../redux/slices/projectSlice';
 import { fetchTasks } from '../../redux/slices/taskSlice';
 import { fetchIssues } from '../../redux/slices/issueSlice';
@@ -10,19 +13,33 @@ import { Task } from '../../types';
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
-  const { projects, loading: projectsLoading } = useAppSelector((state) => state.projects);
-  const { tasks, loading: tasksLoading } = useAppSelector((state) => state.tasks);
-  const { issues, loading: issuesLoading } = useAppSelector((state) => state.issues);
+  const router = useRouter();
+  const { user } = useAppSelector((state: RootState) => state.auth);
+  const { projects, isLoading: projectsLoading } = useAppSelector((state: RootState) => state.projects);
+  const { tasks, isLoading: tasksLoading } = useAppSelector((state: RootState) => state.tasks);
+  const { issues, isLoading: issuesLoading } = useAppSelector((state: RootState) => state.issues);
  
  
   useEffect(() => {
-    dispatch(fetchProjects({}));
-    dispatch(fetchTasks({}));
-    dispatch(fetchIssues({}));
+    // Only fetch data if user is authenticated
+    if (!user) {
+      return;
+    }
+    
+    // Smart fetching: only fetch if we don't have data already (like social media apps)
+    if (!Array.isArray(projects) || projects.length === 0) {
+      dispatch(fetchProjects({}));
+    }
+    if (!Array.isArray(tasks) || tasks.length === 0) {
+      dispatch(fetchTasks({}));
+    }
+    if (!Array.isArray(issues) || issues.length === 0) {
+      dispatch(fetchIssues({}));
+    }
+    // Always fetch notifications as they're time-sensitive
     dispatch(fetchNotifications({}));
     dispatch(fetchUnreadCount());
-  }, [dispatch]);
+  }, [dispatch, projects, tasks, issues, user]);
 
   const isLoading = projectsLoading || tasksLoading || issuesLoading;
 
@@ -61,7 +78,7 @@ export default function DashboardPage() {
           </div>
           <div className="bg-gray-50 px-5 py-3">
             <div className="text-sm">
-              <button onClick={() => window.location.href="/projects"} className="font-medium text-blue-700 hover:text-blue-900">
+              <button onClick={() => router.push("/projects")} className="font-medium text-blue-700 hover:text-blue-900">
                 View all projects
               </button>
             </div>
@@ -89,9 +106,9 @@ export default function DashboardPage() {
           </div>
           <div className="bg-gray-50 px-5 py-3">
             <div className="text-sm">
-              <a href="/tasks" className="font-medium text-green-700 hover:text-green-900">
+              <Link href="/tasks" className="font-medium text-green-700 hover:text-green-900">
                 View all tasks
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -117,9 +134,9 @@ export default function DashboardPage() {
           </div>
           <div className="bg-gray-50 px-5 py-3">
             <div className="text-sm">
-              <a href="/dashboard/issues" className="font-medium text-red-700 hover:text-red-900">
+              <Link href="/issues" className="font-medium text-red-700 hover:text-red-900">
                 View all issues
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -131,7 +148,7 @@ export default function DashboardPage() {
         <ul className="divide-y divide-gray-200">
           {Array.isArray(tasks) ? tasks.slice(0, 5).map((task: Task) => (
             <li key={task.id}>
-              <a href={`/dashboard/tasks/${task.id}`} className="block hover:bg-gray-50">
+              <Link href={`/tasks/${task.id}`} className="block hover:bg-gray-50">
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-blue-600 truncate">{task.title}</p>
@@ -155,12 +172,12 @@ export default function DashboardPage() {
                         <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                       </svg>
                       <p>
-                        Due on {task.dueDate ? <time dateTime={task.dueDate}>{new Date(task.dueDate).toLocaleDateString()}</time> : 'Not set'}
+                        Due on {task.deadline ? <time dateTime={task.deadline}>{new Date(task.deadline).toLocaleDateString()}</time> : 'Not set'}
                       </p>
                     </div>
                   </div>
                 </div>
-              </a>
+              </Link>
             </li>
           )) : (
             <li className="px-4 py-4 text-center text-gray-500">
