@@ -1,7 +1,9 @@
 import { ConfigService } from '@nestjs/config'
 import { TypeOrmModuleOptions } from '@nestjs/typeorm'
 import { User } from '../entities/user.entity'
+import { PendingRegistration } from '../entities/pending-registration.entity'
 import { Project } from '../entities/project.entity'
+import { ProjectInvitation } from '../entities/project-invitation.entity'
 import { Task } from '../entities/task.entity'
 import { Issue } from '../entities/issue.entity'
 import { Comment } from '../entities/comment.entity'
@@ -27,7 +29,9 @@ export const databaseConfig = (
   const commonConfig = {
     entities: [
       User,
+      PendingRegistration,
       Project,
+      ProjectInvitation,
       Task,
       Issue,
       Comment,
