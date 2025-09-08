@@ -13,6 +13,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService)
   console.log('Environment:', configService.get('NODE_ENV'))
 
+  
   // Security middleware
   app.use(helmet())
 
@@ -61,11 +62,13 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup("api/docs", app, document)
 
-  const port = configService.get<number>("PORT") || 3000
-  await app.listen(port)
+  const port = configService.get<number>('PORT') || 3001;
+  console.log(`🔧 Port configuration: ${port}`);
+  await app.listen(port);
 
   console.log(`🚀 Application is running on: http://localhost:${port}`)
   console.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`)
 }
 
 bootstrap()
+
