@@ -30,8 +30,9 @@ export const fetchNotifications = createAsyncThunk<{ data: Notification[]; total
         limit: params.limit || notifications.length,
         totalPages: Math.ceil(notifications.length / (params.limit || notifications.length))
       };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch notifications');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch notifications';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -40,10 +41,11 @@ export const fetchUnreadCount = createAsyncThunk(
   'notifications/fetchUnreadCount',
   async (_, { rejectWithValue }) => {
     try {
-      const count = await notificationService.getUnreadCount();
-      return count;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch unread count');
+      const response = await notificationService.getUnreadCount();
+      return response.count;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch unread count';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -54,8 +56,9 @@ export const markAsRead = createAsyncThunk(
     try {
       await notificationService.markAsRead(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to mark notification as read');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to mark notification as read';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -66,8 +69,9 @@ export const markAllAsRead = createAsyncThunk(
     try {
       await notificationService.markAllAsRead();
       return true;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to mark all notifications as read');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to mark all notifications as read';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -78,8 +82,9 @@ export const deleteNotification = createAsyncThunk(
     try {
       await notificationService.deleteNotification(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to delete notification');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete notification';
+      return rejectWithValue(errorMessage);
     }
   }
 );
