@@ -32,6 +32,7 @@ const notifications_module_1 = __webpack_require__(/*! ./modules/notifications/n
 const time_tracking_module_1 = __webpack_require__(/*! ./modules/time-tracking/time-tracking.module */ "./src/modules/time-tracking/time-tracking.module.ts");
 const reports_module_1 = __webpack_require__(/*! ./modules/reports/reports.module */ "./src/modules/reports/reports.module.ts");
 const webhooks_module_1 = __webpack_require__(/*! ./modules/webhooks/webhooks.module */ "./src/modules/webhooks/webhooks.module.ts");
+const invitations_module_1 = __webpack_require__(/*! ./modules/invitations/invitations.module */ "./src/modules/invitations/invitations.module.ts");
 const database_config_1 = __webpack_require__(/*! ./config/database.config */ "./src/config/database.config.ts");
 const cloudinary_config_1 = __webpack_require__(/*! ./config/cloudinary.config */ "./src/config/cloudinary.config.ts");
 let AppModule = class AppModule {
@@ -89,6 +90,7 @@ exports.AppModule = AppModule = __decorate([
             time_tracking_module_1.TimeTrackingModule,
             reports_module_1.ReportsModule,
             webhooks_module_1.WebhooksModule,
+            invitations_module_1.InvitationsModule,
         ],
         providers: [
             {
@@ -235,6 +237,7 @@ var NotificationType;
     NotificationType["COMMENT_ADDED"] = "comment_added";
     NotificationType["DEADLINE_REMINDER"] = "deadline_reminder";
     NotificationType["MENTION"] = "mention";
+    NotificationType["PROJECT_MEMBER_ADDED"] = "project_member_added";
 })(NotificationType || (exports.NotificationType = NotificationType = {}));
 
 
@@ -454,7 +457,9 @@ exports.cloudinaryConfig = cloudinaryConfig;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.databaseConfig = void 0;
 const user_entity_1 = __webpack_require__(/*! ../entities/user.entity */ "./src/entities/user.entity.ts");
+const pending_registration_entity_1 = __webpack_require__(/*! ../entities/pending-registration.entity */ "./src/entities/pending-registration.entity.ts");
 const project_entity_1 = __webpack_require__(/*! ../entities/project.entity */ "./src/entities/project.entity.ts");
+const project_invitation_entity_1 = __webpack_require__(/*! ../entities/project-invitation.entity */ "./src/entities/project-invitation.entity.ts");
 const task_entity_1 = __webpack_require__(/*! ../entities/task.entity */ "./src/entities/task.entity.ts");
 const issue_entity_1 = __webpack_require__(/*! ../entities/issue.entity */ "./src/entities/issue.entity.ts");
 const comment_entity_1 = __webpack_require__(/*! ../entities/comment.entity */ "./src/entities/comment.entity.ts");
@@ -470,7 +475,9 @@ const databaseConfig = (configService) => {
     const commonConfig = {
         entities: [
             user_entity_1.User,
+            pending_registration_entity_1.PendingRegistration,
             project_entity_1.Project,
+            project_invitation_entity_1.ProjectInvitation,
             task_entity_1.Task,
             issue_entity_1.Issue,
             comment_entity_1.Comment,
@@ -900,6 +907,154 @@ exports.NotificationLog = NotificationLog = __decorate([
 
 /***/ }),
 
+/***/ "./src/entities/pending-registration.entity.ts":
+/*!*****************************************************!*\
+  !*** ./src/entities/pending-registration.entity.ts ***!
+  \*****************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PendingRegistration = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+let PendingRegistration = class PendingRegistration {
+};
+exports.PendingRegistration = PendingRegistration;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], PendingRegistration.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ unique: true }),
+    __metadata("design:type", String)
+], PendingRegistration.prototype, "email", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], PendingRegistration.prototype, "password", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], PendingRegistration.prototype, "name", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], PendingRegistration.prototype, "otpCode", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], PendingRegistration.prototype, "otpExpires", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+], PendingRegistration.prototype, "createdAt", void 0);
+exports.PendingRegistration = PendingRegistration = __decorate([
+    (0, typeorm_1.Entity)('pending_registrations'),
+    (0, typeorm_1.Index)(['email'], { unique: true })
+], PendingRegistration);
+
+
+/***/ }),
+
+/***/ "./src/entities/project-invitation.entity.ts":
+/*!***************************************************!*\
+  !*** ./src/entities/project-invitation.entity.ts ***!
+  \***************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b, _c, _d, _e, _f;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProjectInvitation = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+const project_entity_1 = __webpack_require__(/*! ./project.entity */ "./src/entities/project.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ./user.entity */ "./src/entities/user.entity.ts");
+let ProjectInvitation = class ProjectInvitation {
+};
+exports.ProjectInvitation = ProjectInvitation;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], ProjectInvitation.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], ProjectInvitation.prototype, "email", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: ['pending', 'accepted', 'declined', 'expired'],
+        default: 'pending',
+    }),
+    __metadata("design:type", String)
+], ProjectInvitation.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], ProjectInvitation.prototype, "token", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], ProjectInvitation.prototype, "expiresAt", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => project_entity_1.Project, { onDelete: 'CASCADE' }),
+    __metadata("design:type", typeof (_b = typeof project_entity_1.Project !== "undefined" && project_entity_1.Project) === "function" ? _b : Object)
+], ProjectInvitation.prototype, "project", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], ProjectInvitation.prototype, "projectId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, { nullable: true }),
+    __metadata("design:type", typeof (_c = typeof user_entity_1.User !== "undefined" && user_entity_1.User) === "function" ? _c : Object)
+], ProjectInvitation.prototype, "invitedBy", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], ProjectInvitation.prototype, "invitedById", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, { nullable: true }),
+    __metadata("design:type", typeof (_d = typeof user_entity_1.User !== "undefined" && user_entity_1.User) === "function" ? _d : Object)
+], ProjectInvitation.prototype, "acceptedBy", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], ProjectInvitation.prototype, "acceptedById", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_e = typeof Date !== "undefined" && Date) === "function" ? _e : Object)
+], ProjectInvitation.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", typeof (_f = typeof Date !== "undefined" && Date) === "function" ? _f : Object)
+], ProjectInvitation.prototype, "updatedAt", void 0);
+exports.ProjectInvitation = ProjectInvitation = __decorate([
+    (0, typeorm_1.Entity)('project_invitations'),
+    (0, typeorm_1.Index)(['email', 'project'])
+], ProjectInvitation);
+
+
+/***/ }),
+
 /***/ "./src/entities/project.entity.ts":
 /*!****************************************!*\
   !*** ./src/entities/project.entity.ts ***!
@@ -956,6 +1111,14 @@ __decorate([
     }),
     __metadata("design:type", typeof (_c = typeof enums_1.Priority !== "undefined" && enums_1.Priority) === "function" ? _c : Object)
 ], Project.prototype, "priority", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: ['not_started', 'in_progress', 'completed', 'on_hold'],
+        default: 'not_started',
+    }),
+    __metadata("design:type", String)
+], Project.prototype, "status", void 0);
 __decorate([
     (0, typeorm_1.Column)('simple-array', { nullable: true }),
     __metadata("design:type", Array)
@@ -1259,7 +1422,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b, _c, _d, _e, _f;
+var _a, _b, _c, _d, _e, _f, _g;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.User = void 0;
 const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
@@ -1340,12 +1503,24 @@ __decorate([
     __metadata("design:type", typeof (_d = typeof Date !== "undefined" && Date) === "function" ? _d : Object)
 ], User.prototype, "otpExpires", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isEmailVerified", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "emailVerificationToken", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", typeof (_e = typeof Date !== "undefined" && Date) === "function" ? _e : Object)
+], User.prototype, "emailVerificationExpires", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_f = typeof Date !== "undefined" && Date) === "function" ? _f : Object)
 ], User.prototype, "createdAt", void 0);
 __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
-    __metadata("design:type", typeof (_f = typeof Date !== "undefined" && Date) === "function" ? _f : Object)
+    __metadata("design:type", typeof (_g = typeof Date !== "undefined" && Date) === "function" ? _g : Object)
 ], User.prototype, "updatedAt", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => project_entity_1.Project, (project) => project.owner),
@@ -1490,7 +1665,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -1504,6 +1679,8 @@ const forgot_password_dto_1 = __webpack_require__(/*! ./dtos/forgot-password.dto
 const reset_password_dto_1 = __webpack_require__(/*! ./dtos/reset-password.dto */ "./src/modules/auth/dtos/reset-password.dto.ts");
 const refresh_token_dto_1 = __webpack_require__(/*! ./dtos/refresh-token.dto */ "./src/modules/auth/dtos/refresh-token.dto.ts");
 const verify_otp_dto_1 = __webpack_require__(/*! ./dtos/verify-otp.dto */ "./src/modules/auth/dtos/verify-otp.dto.ts");
+const verify_email_dto_1 = __webpack_require__(/*! ./dtos/verify-email.dto */ "./src/modules/auth/dtos/verify-email.dto.ts");
+const resend_verification_dto_1 = __webpack_require__(/*! ./dtos/resend-verification.dto */ "./src/modules/auth/dtos/resend-verification.dto.ts");
 let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
@@ -1522,6 +1699,15 @@ let AuthController = class AuthController {
     }
     async verifyOtp(verifyOtpDto) {
         return this.authService.verifyOtp(verifyOtpDto.email, verifyOtpDto.otp);
+    }
+    async generateOtp(body) {
+        return this.authService.generateOtp(body.email);
+    }
+    async verifyEmail(verifyEmailDto) {
+        return this.authService.verifyEmail(verifyEmailDto.token);
+    }
+    async resendVerification(resendVerificationDto) {
+        return this.authService.resendVerificationEmail(resendVerificationDto.email);
     }
     async refresh(refreshTokenDto) {
         return this.authService.refreshToken(refreshTokenDto.refreshToken);
@@ -1593,13 +1779,48 @@ __decorate([
 ], AuthController.prototype, "verifyOtp", null);
 __decorate([
     (0, public_decorator_1.Public)(),
+    (0, common_1.Post)("generate-otp"),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: "Generate and send OTP" }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: "OTP sent successfully" }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "generateOtp", null);
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Post)("verify-email"),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: "Verify email address" }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: "Email successfully verified" }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: "Invalid or expired token" }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_g = typeof verify_email_dto_1.VerifyEmailDto !== "undefined" && verify_email_dto_1.VerifyEmailDto) === "function" ? _g : Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "verifyEmail", null);
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Post)("resend-verification"),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: "Resend email verification" }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: "Verification email sent" }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: "User not found or email already verified" }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_h = typeof resend_verification_dto_1.ResendVerificationDto !== "undefined" && resend_verification_dto_1.ResendVerificationDto) === "function" ? _h : Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "resendVerification", null);
+__decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Post)("refresh"),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({ summary: "Refresh access token" }),
     (0, swagger_1.ApiResponse)({ status: 200, description: "Token successfully refreshed" }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_g = typeof refresh_token_dto_1.RefreshTokenDto !== "undefined" && refresh_token_dto_1.RefreshTokenDto) === "function" ? _g : Object]),
+    __metadata("design:paramtypes", [typeof (_j = typeof refresh_token_dto_1.RefreshTokenDto !== "undefined" && refresh_token_dto_1.RefreshTokenDto) === "function" ? _j : Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "refresh", null);
 __decorate([
@@ -1648,6 +1869,7 @@ const auth_controller_1 = __webpack_require__(/*! ./auth.controller */ "./src/mo
 const auth_service_1 = __webpack_require__(/*! ./auth.service */ "./src/modules/auth/auth.service.ts");
 const jwt_strategy_1 = __webpack_require__(/*! ./strategies/jwt.strategy */ "./src/modules/auth/strategies/jwt.strategy.ts");
 const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+const pending_registration_entity_1 = __webpack_require__(/*! ../../entities/pending-registration.entity */ "./src/entities/pending-registration.entity.ts");
 const users_module_1 = __webpack_require__(/*! ../users/users.module */ "./src/modules/users/users.module.ts");
 const email_service_1 = __webpack_require__(/*! ./email.service */ "./src/modules/auth/email.service.ts");
 let AuthModule = class AuthModule {
@@ -1656,14 +1878,14 @@ exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User]),
+            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, pending_registration_entity_1.PendingRegistration]),
             passport_1.PassportModule,
             jwt_1.JwtModule.registerAsync({
                 imports: [config_1.ConfigModule],
                 useFactory: async (configService) => ({
                     secret: configService.get("JWT_SECRET"),
                     signOptions: {
-                        expiresIn: configService.get("JWT_EXPIRES_IN") || "15m",
+                        expiresIn: '24h',
                     },
                 }),
                 inject: [config_1.ConfigService],
@@ -1677,7 +1899,7 @@ exports.AuthModule = AuthModule = __decorate([
             jwt_strategy_1.JwtStrategy,
             email_service_1.EmailService
         ],
-        exports: [auth_service_1.AuthService],
+        exports: [auth_service_1.AuthService, email_service_1.EmailService],
     })
 ], AuthModule);
 
@@ -1703,7 +1925,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -1714,10 +1936,12 @@ const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 const crypto = __webpack_require__(/*! crypto */ "crypto");
 const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+const pending_registration_entity_1 = __webpack_require__(/*! ../../entities/pending-registration.entity */ "./src/entities/pending-registration.entity.ts");
 const email_service_1 = __webpack_require__(/*! ./email.service */ "./src/modules/auth/email.service.ts");
 let AuthService = class AuthService {
-    constructor(userRepository, jwtService, configService, emailService) {
+    constructor(userRepository, pendingRegistrationRepository, jwtService, configService, emailService) {
         this.userRepository = userRepository;
+        this.pendingRegistrationRepository = pendingRegistrationRepository;
         this.jwtService = jwtService;
         this.configService = configService;
         this.emailService = emailService;
@@ -1730,39 +1954,47 @@ let AuthService = class AuthService {
         if (existingUser) {
             throw new common_1.ConflictException('User with this email already exists');
         }
+        const existingPending = await this.pendingRegistrationRepository.findOne({
+            where: { email },
+        });
+        if (existingPending) {
+            await this.pendingRegistrationRepository.remove(existingPending);
+        }
         const hashedPassword = await bcrypt.hash(password, 12);
-        const user = this.userRepository.create({
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+        const pendingRegistration = this.pendingRegistrationRepository.create({
             email,
             password: hashedPassword,
             name,
+            otpCode: otp,
+            otpExpires,
         });
-        const savedUser = await this.userRepository.save(user);
-        const tokens = await this.generateTokens(savedUser);
-        await this.updateRefreshToken(savedUser.id, tokens.refreshToken);
+        const savedPending = await this.pendingRegistrationRepository.save(pendingRegistration);
         try {
             if (this.emailService) {
-                await this.emailService.add('welcome', {
-                    email: savedUser.email,
-                    name: savedUser.name,
+                await this.emailService.add('otp', {
+                    email: savedPending.email,
+                    name: savedPending.name,
+                    otp,
                 });
-            }
-            else {
-                console.log(`Mock email would be sent to ${savedUser.email} with type: welcome`);
             }
         }
         catch (error) {
-            console.error('Failed to send welcome email:', error.message);
+            console.error('Failed to send OTP email:', error.message);
+            console.log(`🔐 FALLBACK - OTP for ${savedPending.email}: ${otp}`);
         }
         return {
-            user: this.sanitizeUser(savedUser),
-            ...tokens,
+            message: 'Registration initiated. Please verify your email with the OTP sent to your email address to complete registration.',
+            email: savedPending.email,
+            name: savedPending.name
         };
     }
     async login(loginDto) {
         const { email, password } = loginDto;
         const user = await this.userRepository.findOne({
             where: { email, isActive: true },
-            select: ['id', 'email', 'password', 'name', 'role', 'avatar'],
+            select: ['id', 'email', 'password', 'name', 'role', 'avatar', 'isEmailVerified'],
         });
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid credentials');
@@ -1771,18 +2003,15 @@ let AuthService = class AuthService {
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
+        if (!user.isEmailVerified) {
+            throw new common_1.UnauthorizedException('Please verify your email address before logging in');
+        }
         const tokens = await this.generateTokens(user);
         await this.updateRefreshToken(user.id, tokens.refreshToken);
         const response = {
             user: this.sanitizeUser(user),
             ...tokens,
         };
-        console.log('Auth Service - Login response structure:', {
-            hasUser: !!response.user,
-            hasAccessToken: !!response.accessToken,
-            hasRefreshToken: !!response.refreshToken,
-            responseKeys: Object.keys(response)
-        });
         return response;
     }
     async forgotPassword(email) {
@@ -1822,35 +2051,92 @@ let AuthService = class AuthService {
         return { message: 'Password successfully reset' };
     }
     async generateOtp(email) {
-        const user = await this.userRepository.findOne({ where: { email } });
-        if (!user) {
-            throw new common_1.BadRequestException('User not found');
+        const pendingRegistration = await this.pendingRegistrationRepository.findOne({
+            where: { email }
+        });
+        if (!pendingRegistration) {
+            throw new common_1.BadRequestException('No pending registration found for this email');
         }
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
-        await this.userRepository.update(user.id, {
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+        await this.pendingRegistrationRepository.update(pendingRegistration.id, {
             otpCode: otp,
             otpExpires,
         });
         await this.emailService.add('otp', {
-            email: user.email,
-            name: user.name,
+            email: pendingRegistration.email,
+            name: pendingRegistration.name,
             otp,
         });
-        return { message: 'OTP sent to your email' };
+        return { message: 'New OTP sent to your email' };
     }
     async verifyOtp(email, otp) {
-        const user = await this.userRepository.findOne({
+        const pendingRegistration = await this.pendingRegistrationRepository.findOne({
             where: { email },
         });
-        if (!user || user.otpCode !== otp || user.otpExpires < new Date()) {
-            throw new common_1.BadRequestException('Invalid or expired OTP');
+        if (!pendingRegistration) {
+            throw new common_1.NotFoundException('No pending registration found for this email');
+        }
+        if (pendingRegistration.otpCode !== otp) {
+            throw new common_1.BadRequestException('Invalid OTP');
+        }
+        if (pendingRegistration.otpExpires < new Date()) {
+            throw new common_1.BadRequestException('OTP has expired');
+        }
+        const user = this.userRepository.create({
+            email: pendingRegistration.email,
+            password: pendingRegistration.password,
+            name: pendingRegistration.name,
+            isEmailVerified: true,
+        });
+        const savedUser = await this.userRepository.save(user);
+        await this.pendingRegistrationRepository.remove(pendingRegistration);
+        return {
+            message: 'Registration completed successfully. You can now login.',
+            user: {
+                id: savedUser.id,
+                email: savedUser.email,
+                name: savedUser.name,
+                isEmailVerified: true,
+            },
+        };
+    }
+    async verifyEmail(token) {
+        const user = await this.userRepository.findOne({
+            where: {
+                emailVerificationToken: token,
+            },
+        });
+        if (!user || user.emailVerificationExpires < new Date()) {
+            throw new common_1.BadRequestException('Invalid or expired verification token');
         }
         await this.userRepository.update(user.id, {
-            otpCode: null,
-            otpExpires: null,
+            isEmailVerified: true,
+            emailVerificationToken: null,
+            emailVerificationExpires: null,
         });
-        return { message: 'OTP verified successfully' };
+        return { message: 'Email verified successfully' };
+    }
+    async resendVerificationEmail(email) {
+        const user = await this.userRepository.findOne({ where: { email } });
+        if (!user) {
+            throw new common_1.BadRequestException('User not found');
+        }
+        if (user.isEmailVerified) {
+            throw new common_1.BadRequestException('Email is already verified');
+        }
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await this.userRepository.update(user.id, {
+            emailVerificationToken: verificationToken,
+            emailVerificationExpires: verificationExpires,
+        });
+        await this.emailService.add('email-verification', {
+            email: user.email,
+            name: user.name,
+            verificationToken,
+        });
+        return { message: 'Verification email sent' };
     }
     async refreshToken(refreshToken) {
         try {
@@ -1881,7 +2167,6 @@ let AuthService = class AuthService {
             email: user.email,
             role: user.role,
         };
-        console.log('Auth Service - Generating tokens for payload:', payload);
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload),
             this.jwtService.signAsync(payload, {
@@ -1889,7 +2174,6 @@ let AuthService = class AuthService {
                 expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN') || '7d',
             }),
         ]);
-        console.log('Auth Service - Tokens generated successfully');
         return {
             accessToken,
             refreshToken,
@@ -1906,15 +2190,12 @@ let AuthService = class AuthService {
         return sanitized;
     }
     async validateUser(payload) {
-        console.log('Auth Service - Validating user with payload:', payload);
         const user = await this.userRepository.findOne({
             where: { id: payload.sub, isActive: true },
         });
         if (!user) {
-            console.log('Auth Service - User not found or inactive for ID:', payload.sub);
             throw new common_1.UnauthorizedException();
         }
-        console.log('Auth Service - User found and active:', user.id, user.email);
         return user;
     }
 };
@@ -1922,7 +2203,8 @@ exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _b : Object, typeof (_c = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _c : Object, typeof (_d = typeof email_service_1.EmailService !== "undefined" && email_service_1.EmailService) === "function" ? _d : Object])
+    __param(1, (0, typeorm_1.InjectRepository)(pending_registration_entity_1.PendingRegistration)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _c : Object, typeof (_d = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _d : Object, typeof (_e = typeof email_service_1.EmailService !== "undefined" && email_service_1.EmailService) === "function" ? _e : Object])
 ], AuthService);
 
 
@@ -2092,6 +2374,39 @@ __decorate([
 
 /***/ }),
 
+/***/ "./src/modules/auth/dtos/resend-verification.dto.ts":
+/*!**********************************************************!*\
+  !*** ./src/modules/auth/dtos/resend-verification.dto.ts ***!
+  \**********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ResendVerificationDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+class ResendVerificationDto {
+}
+exports.ResendVerificationDto = ResendVerificationDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Email address to resend verification to' }),
+    (0, class_validator_1.IsEmail)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], ResendVerificationDto.prototype, "email", void 0);
+
+
+/***/ }),
+
 /***/ "./src/modules/auth/dtos/reset-password.dto.ts":
 /*!*****************************************************!*\
   !*** ./src/modules/auth/dtos/reset-password.dto.ts ***!
@@ -2131,6 +2446,39 @@ __decorate([
 
 /***/ }),
 
+/***/ "./src/modules/auth/dtos/verify-email.dto.ts":
+/*!***************************************************!*\
+  !*** ./src/modules/auth/dtos/verify-email.dto.ts ***!
+  \***************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.VerifyEmailDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+class VerifyEmailDto {
+}
+exports.VerifyEmailDto = VerifyEmailDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Email verification token' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], VerifyEmailDto.prototype, "token", void 0);
+
+
+/***/ }),
+
 /***/ "./src/modules/auth/dtos/verify-otp.dto.ts":
 /*!*************************************************!*\
   !*** ./src/modules/auth/dtos/verify-otp.dto.ts ***!
@@ -2165,6 +2513,12 @@ __decorate([
     (0, class_validator_1.Length)(6, 6),
     __metadata("design:type", String)
 ], VerifyOtpDto.prototype, "otp", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: "email_verification", required: false }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], VerifyOtpDto.prototype, "type", void 0);
 
 
 /***/ }),
@@ -2194,15 +2548,24 @@ const nodemailer = __webpack_require__(/*! nodemailer */ "nodemailer");
 let EmailService = class EmailService {
     constructor(configService) {
         this.configService = configService;
-        this.transporter = nodemailer.createTransport({
-            host: this.configService.get('SMTP_HOST'),
-            port: this.configService.get('SMTP_PORT'),
-            secure: this.configService.get('SMTP_SECURE', true),
-            auth: {
-                user: this.configService.get('SMTP_USER'),
-                pass: this.configService.get('SMTP_PASS'),
-            },
-        });
+        try {
+            this.transporter = nodemailer.createTransport({
+                host: 'smtp.gmail.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: 'hw93goj@gmail.com',
+                    pass: 'utro dkai fzpm crlx',
+                },
+                tls: {
+                    rejectUnauthorized: false
+                }
+            });
+        }
+        catch (error) {
+            console.error('❌ Failed to initialize email service:', error);
+            this.transporter = null;
+        }
     }
     async add(type, data) {
         const templates = {
@@ -2220,17 +2583,169 @@ let EmailService = class EmailService {
           <h1>Password Reset</h1>
           <p>Hello ${data.name},</p>
           <p>You requested to reset your password. Click the link below to proceed:</p>
-          <a href="${this.configService.get('FRONTEND_URL')}/reset-password?token=${data.resetToken}">Reset Password</a>
+          <a href="${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/auth/reset-password?token=${data.resetToken}&email=${encodeURIComponent(data.email)}">Reset Password</a>
           <p>This link will expire in 15 minutes.</p>
         `,
             },
             otp: {
-                subject: 'Your OTP Code',
+                subject: 'Your OTP Code - Task Management System',
                 html: `
-          <h1>OTP Verification</h1>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #3B82F6; text-align: center;">OTP Verification</h1>
+            <p>Hello ${data.name},</p>
+            <p>Thank you for registering with our Task Management System. To complete your registration, please use the following OTP code:</p>
+            <div style="background-color: #f8f9fa; border: 2px solid #3B82F6; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+              <h2 style="color: #3B82F6; font-size: 32px; margin: 0; letter-spacing: 4px;">${data.otp}</h2>
+            </div>
+            <p><strong>Important:</strong> This code will expire in 10 minutes.</p>
+            <p>If you didn't request this code, please ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #6b7280; font-size: 12px;">Task Management System</p>
+          </div>
+        `,
+            },
+            'email-verification': {
+                subject: 'Verify Your Email Address',
+                html: `
+          <h1>Email Verification</h1>
           <p>Hello ${data.name},</p>
-          <p>Your OTP code is: <strong>${data.otp}</strong></p>
-          <p>This code will expire in 5 minutes.</p>
+          <p>Thank you for registering with our Task Management System. Please verify your email address by clicking the link below:</p>
+          <a href="${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/auth/verify-email?token=${data.verificationToken}" 
+             style="display: inline-block; padding: 12px 24px; background-color: #3B82F6; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+            Verify Email Address
+          </a>
+          <p>Or copy and paste this link in your browser:</p>
+          <p>${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/auth/verify-email?token=${data.verificationToken}</p>
+          <p>This link will expire in 24 hours.</p>
+          <p>If you didn't create an account, please ignore this email.</p>
+        `,
+            },
+            'project-invitation': {
+                subject: `You've been invited to join "${data.projectName}"`,
+                html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #3B82F6; text-align: center;">Project Invitation</h1>
+            <p>Hello,</p>
+            <p>${data.inviterName} has invited you to join the project "<strong>${data.projectName}</strong>" in our Task Management System.</p>
+            <div style="background-color: #f8f9fa; border-left: 4px solid #3B82F6; padding: 15px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #1f2937;">Project Details:</h3>
+              <p style="margin: 5px 0;"><strong>Name:</strong> ${data.projectName}</p>
+              ${data.projectDescription ? `<p style="margin: 5px 0;"><strong>Description:</strong> ${data.projectDescription}</p>` : ''}
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/invitations/accept?token=${data.invitationToken}" 
+                 style="display: inline-block; padding: 12px 24px; background-color: #10B981; color: white; text-decoration: none; border-radius: 6px; margin: 0 10px;">
+                Accept Invitation
+              </a>
+              <a href="${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/invitations/decline?token=${data.invitationToken}" 
+                 style="display: inline-block; padding: 12px 24px; background-color: #EF4444; color: white; text-decoration: none; border-radius: 6px; margin: 0 10px;">
+                Decline Invitation
+              </a>
+            </div>
+            <p>This invitation will expire in 7 days.</p>
+            <p>If you don't have an account yet, you'll be prompted to create one when accepting the invitation.</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #6b7280; font-size: 12px;">Task Management System</p>
+          </div>
+        `,
+            },
+            'project-member-added': {
+                subject: `You've been added to project "${data.projectName}"`,
+                html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #10B981; text-align: center;">Welcome to the Team!</h1>
+            <p>Hello ${data.memberName},</p>
+            <p>${data.inviterName} has added you as a member to the project "<strong>${data.projectName}</strong>" in our Task Management System.</p>
+            <div style="background-color: #f8f9fa; border-left: 4px solid #10B981; padding: 15px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #1f2937;">Project Details:</h3>
+              <p style="margin: 5px 0;"><strong>Name:</strong> ${data.projectName}</p>
+              ${data.projectDescription ? `<p style="margin: 5px 0;"><strong>Description:</strong> ${data.projectDescription}</p>` : ''}
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/projects/${data.projectId}" 
+                 style="display: inline-block; padding: 12px 24px; background-color: #3B82F6; color: white; text-decoration: none; border-radius: 6px;">
+                View Project
+              </a>
+            </div>
+            <p>You can now collaborate on tasks, view project updates, and contribute to the project's success.</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #6b7280; font-size: 12px;">Task Management System</p>
+          </div>
+        `,
+            },
+            'task-assignment': {
+                subject: `You've been assigned to task "${data.taskTitle}"`,
+                html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #3B82F6; text-align: center;">New Task Assignment</h1>
+            <p>Hello ${data.assigneeName},</p>
+            <p>${data.assignerName} has assigned you to a new task in our Task Management System.</p>
+            <div style="background-color: #f8f9fa; border-left: 4px solid #3B82F6; padding: 15px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #1f2937;">Task Details:</h3>
+              <p style="margin: 5px 0;"><strong>Title:</strong> ${data.taskTitle}</p>
+              ${data.taskDescription ? `<p style="margin: 5px 0;"><strong>Description:</strong> ${data.taskDescription}</p>` : ''}
+              <p style="margin: 5px 0;"><strong>Priority:</strong> <span style="text-transform: capitalize; color: ${data.priority === 'high' ? '#EF4444' : data.priority === 'medium' ? '#F59E0B' : '#10B981'};">${data.priority}</span></p>
+              ${data.dueDate ? `<p style="margin: 5px 0;"><strong>Due Date:</strong> ${new Date(data.dueDate).toLocaleDateString()}</p>` : ''}
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/tasks/${data.taskId}" 
+                 style="display: inline-block; padding: 12px 24px; background-color: #10B981; color: white; text-decoration: none; border-radius: 6px;">
+                View Task
+              </a>
+            </div>
+            <p>Please review the task details and update the status as you make progress.</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #6b7280; font-size: 12px;">Task Management System</p>
+          </div>
+        `,
+            },
+            'task-update': {
+                subject: `Task "${data.taskTitle}" has been updated`,
+                html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #F59E0B; text-align: center;">Task Update</h1>
+            <p>Hello ${data.assigneeName},</p>
+            <p>${data.updaterName} has updated the task "${data.taskTitle}" that you're assigned to.</p>
+            <div style="background-color: #f8f9fa; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #1f2937;">Update Details:</h3>
+              <p style="margin: 5px 0;"><strong>Task:</strong> ${data.taskTitle}</p>
+              <p style="margin: 5px 0;"><strong>New Status:</strong> <span style="text-transform: capitalize; color: ${data.newStatus === 'done' ? '#10B981' : data.newStatus === 'blocked' ? '#EF4444' : '#3B82F6'};">${data.newStatus.replace('_', ' ')}</span></p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/tasks/${data.taskId}" 
+                 style="display: inline-block; padding: 12px 24px; background-color: #3B82F6; color: white; text-decoration: none; border-radius: 6px;">
+                View Task
+              </a>
+            </div>
+            <p>Check the task for more details and any additional updates.</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #6b7280; font-size: 12px;">Task Management System</p>
+          </div>
+        `,
+            },
+            'issue-assignment': {
+                subject: `You've been assigned to issue "${data.issueTitle}"`,
+                html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #EF4444; text-align: center;">Issue Assignment</h1>
+            <p>Hello ${data.assigneeName},</p>
+            <p>${data.assignerName} has assigned you to an issue in our Task Management System.</p>
+            <div style="background-color: #f8f9fa; border-left: 4px solid #EF4444; padding: 15px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #1f2937;">Issue Details:</h3>
+              <p style="margin: 5px 0;"><strong>Title:</strong> ${data.issueTitle}</p>
+              ${data.issueDescription ? `<p style="margin: 5px 0;"><strong>Description:</strong> ${data.issueDescription}</p>` : ''}
+              <p style="margin: 5px 0;"><strong>Severity:</strong> <span style="text-transform: capitalize; color: ${data.severity === 'critical' ? '#DC2626' : data.severity === 'high' ? '#EF4444' : data.severity === 'medium' ? '#F59E0B' : '#10B981'};">${data.severity}</span></p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/issues/${data.issueId}" 
+                 style="display: inline-block; padding: 12px 24px; background-color: #EF4444; color: white; text-decoration: none; border-radius: 6px;">
+                View Issue
+              </a>
+            </div>
+            <p>Please investigate and resolve this issue as soon as possible.</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #6b7280; font-size: 12px;">Task Management System</p>
+          </div>
         `,
             },
         };
@@ -2238,12 +2753,27 @@ let EmailService = class EmailService {
         if (!template) {
             throw new Error(`Email template '${type}' not found`);
         }
-        await this.transporter.sendMail({
-            from: this.configService.get('SMTP_FROM'),
-            to: data.email,
-            subject: template.subject,
-            html: template.html,
-        });
+        if (this.transporter) {
+            try {
+                const mailOptions = {
+                    from: `"Task Management System" <hw93goj@gmail.com>`,
+                    to: data.email,
+                    subject: template.subject,
+                    html: template.html,
+                    text: type === 'otp' ? `Your OTP code is: ${data.otp}. This code expires in 10 minutes.` : undefined,
+                };
+                const result = await this.transporter.sendMail(mailOptions);
+                return { success: true, messageId: result.messageId };
+            }
+            catch (error) {
+                console.error(`Failed to send ${type} email to ${data.email}:`, error.message);
+                return { success: false, error: error.message };
+            }
+        }
+        else {
+            console.error('No SMTP transporter available');
+            return { success: false, error: 'No SMTP transporter configured' };
+        }
     }
 };
 exports.EmailService = EmailService;
@@ -2308,14 +2838,15 @@ const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const auth_service_1 = __webpack_require__(/*! ../auth.service */ "./src/modules/auth/auth.service.ts");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     constructor(configService, authService) {
+        const jwtSecret = configService.get("JWT_SECRET") || "fallback-secret-for-development-only-change-in-production";
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: configService.get("JWT_SECRET"),
+            secretOrKey: jwtSecret,
         });
         this.configService = configService;
         this.authService = authService;
-        console.log('JWT Strategy initialized with secret:', configService.get("JWT_SECRET") ? 'SECRET_SET' : 'SECRET_MISSING');
+        console.log('JWT Strategy initialized with secret:', jwtSecret !== "fallback-secret-for-development-only-change-in-production" ? 'SECRET_SET' : 'FALLBACK_SECRET_USED');
     }
     async validate(payload) {
         console.log('JWT Strategy - Validating payload:', payload);
@@ -2626,6 +3157,325 @@ exports.UpdateCommentDto = UpdateCommentDto;
 
 /***/ }),
 
+/***/ "./src/modules/invitations/invitations.controller.ts":
+/*!***********************************************************!*\
+  !*** ./src/modules/invitations/invitations.controller.ts ***!
+  \***********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.InvitationsController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const invitations_service_1 = __webpack_require__(/*! ./invitations.service */ "./src/modules/invitations/invitations.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../auth/guards/jwt-auth.guard */ "./src/modules/auth/guards/jwt-auth.guard.ts");
+let InvitationsController = class InvitationsController {
+    constructor(invitationsService) {
+        this.invitationsService = invitationsService;
+    }
+    async acceptInvitation(token, req) {
+        if (!token) {
+            throw new common_1.BadRequestException('Invitation token is required');
+        }
+        const userId = req.user?.id || null;
+        return this.invitationsService.acceptInvitation(token, userId);
+    }
+    async declineInvitation(token) {
+        if (!token) {
+            throw new common_1.BadRequestException('Invitation token is required');
+        }
+        return this.invitationsService.declineInvitation(token);
+    }
+    async verifyInvitation(token) {
+        return this.invitationsService.verifyInvitation(token);
+    }
+    async getMyInvitations(req) {
+        return this.invitationsService.getUserInvitations(req.user.email);
+    }
+    async acceptInvitationById(id, req) {
+        return this.invitationsService.acceptInvitationById(id, req.user.id);
+    }
+};
+exports.InvitationsController = InvitationsController;
+__decorate([
+    (0, common_1.Get)("accept"),
+    (0, swagger_1.ApiOperation)({ summary: "Accept project invitation via token" }),
+    __param(0, (0, common_1.Query)('token')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], InvitationsController.prototype, "acceptInvitation", null);
+__decorate([
+    (0, common_1.Get)("decline"),
+    (0, swagger_1.ApiOperation)({ summary: "Decline project invitation via token" }),
+    __param(0, (0, common_1.Query)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], InvitationsController.prototype, "declineInvitation", null);
+__decorate([
+    (0, common_1.Get)("verify/:token"),
+    (0, swagger_1.ApiOperation)({ summary: "Verify invitation token and get invitation details" }),
+    __param(0, (0, common_1.Param)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], InvitationsController.prototype, "verifyInvitation", null);
+__decorate([
+    (0, common_1.Get)("my-invitations"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: "Get user's pending invitations" }),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], InvitationsController.prototype, "getMyInvitations", null);
+__decorate([
+    (0, common_1.Post)("accept/:id"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: "Accept invitation by ID (for authenticated users)" }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], InvitationsController.prototype, "acceptInvitationById", null);
+exports.InvitationsController = InvitationsController = __decorate([
+    (0, swagger_1.ApiTags)("invitations"),
+    (0, common_1.Controller)("invitations"),
+    __metadata("design:paramtypes", [typeof (_a = typeof invitations_service_1.InvitationsService !== "undefined" && invitations_service_1.InvitationsService) === "function" ? _a : Object])
+], InvitationsController);
+
+
+/***/ }),
+
+/***/ "./src/modules/invitations/invitations.module.ts":
+/*!*******************************************************!*\
+  !*** ./src/modules/invitations/invitations.module.ts ***!
+  \*******************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.InvitationsModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const invitations_controller_1 = __webpack_require__(/*! ./invitations.controller */ "./src/modules/invitations/invitations.controller.ts");
+const invitations_service_1 = __webpack_require__(/*! ./invitations.service */ "./src/modules/invitations/invitations.service.ts");
+const project_invitation_entity_1 = __webpack_require__(/*! ../../entities/project-invitation.entity */ "./src/entities/project-invitation.entity.ts");
+const project_entity_1 = __webpack_require__(/*! ../../entities/project.entity */ "./src/entities/project.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+let InvitationsModule = class InvitationsModule {
+};
+exports.InvitationsModule = InvitationsModule;
+exports.InvitationsModule = InvitationsModule = __decorate([
+    (0, common_1.Module)({
+        imports: [typeorm_1.TypeOrmModule.forFeature([project_invitation_entity_1.ProjectInvitation, project_entity_1.Project, user_entity_1.User])],
+        controllers: [invitations_controller_1.InvitationsController],
+        providers: [invitations_service_1.InvitationsService],
+        exports: [invitations_service_1.InvitationsService],
+    })
+], InvitationsModule);
+
+
+/***/ }),
+
+/***/ "./src/modules/invitations/invitations.service.ts":
+/*!********************************************************!*\
+  !*** ./src/modules/invitations/invitations.service.ts ***!
+  \********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.InvitationsService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const project_invitation_entity_1 = __webpack_require__(/*! ../../entities/project-invitation.entity */ "./src/entities/project-invitation.entity.ts");
+const project_entity_1 = __webpack_require__(/*! ../../entities/project.entity */ "./src/entities/project.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+let InvitationsService = class InvitationsService {
+    constructor(invitationRepository, projectRepository, userRepository) {
+        this.invitationRepository = invitationRepository;
+        this.projectRepository = projectRepository;
+        this.userRepository = userRepository;
+    }
+    async acceptInvitation(token, userId) {
+        const invitation = await this.invitationRepository.findOne({
+            where: { token, status: 'pending' },
+            relations: ['project', 'invitedBy']
+        });
+        if (!invitation) {
+            throw new common_1.NotFoundException('Invalid or expired invitation');
+        }
+        if (invitation.expiresAt < new Date()) {
+            invitation.status = 'expired';
+            await this.invitationRepository.save(invitation);
+            throw new common_1.BadRequestException('Invitation has expired');
+        }
+        if (!userId) {
+            return {
+                requiresRegistration: true,
+                invitation: {
+                    id: invitation.id,
+                    email: invitation.email,
+                    projectName: invitation.project.name,
+                    projectDescription: invitation.project.description,
+                    inviterName: invitation.invitedBy.name,
+                    token
+                }
+            };
+        }
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        if (user.email !== invitation.email) {
+            throw new common_1.BadRequestException('Invitation email does not match your account email');
+        }
+        const project = await this.projectRepository.findOne({
+            where: { id: invitation.projectId },
+            relations: ['members']
+        });
+        const isAlreadyMember = project.members.some(member => member.id === userId);
+        if (isAlreadyMember) {
+            throw new common_1.ConflictException('You are already a member of this project');
+        }
+        await this.projectRepository
+            .createQueryBuilder()
+            .relation(project_entity_1.Project, 'members')
+            .of(invitation.projectId)
+            .add(userId);
+        invitation.status = 'accepted';
+        invitation.acceptedBy = user;
+        await this.invitationRepository.save(invitation);
+        return {
+            success: true,
+            message: 'Successfully joined the project',
+            project: {
+                id: project.id,
+                name: project.name,
+                description: project.description
+            }
+        };
+    }
+    async declineInvitation(token) {
+        const invitation = await this.invitationRepository.findOne({
+            where: { token, status: 'pending' }
+        });
+        if (!invitation) {
+            throw new common_1.NotFoundException('Invalid or expired invitation');
+        }
+        invitation.status = 'declined';
+        await this.invitationRepository.save(invitation);
+        return {
+            success: true,
+            message: 'Invitation declined successfully'
+        };
+    }
+    async verifyInvitation(token) {
+        const invitation = await this.invitationRepository.findOne({
+            where: { token },
+            relations: ['project', 'invitedBy']
+        });
+        if (!invitation) {
+            throw new common_1.NotFoundException('Invitation not found');
+        }
+        if (invitation.status !== 'pending') {
+            throw new common_1.BadRequestException(`Invitation has been ${invitation.status}`);
+        }
+        if (invitation.expiresAt < new Date()) {
+            invitation.status = 'expired';
+            await this.invitationRepository.save(invitation);
+            throw new common_1.BadRequestException('Invitation has expired');
+        }
+        return {
+            email: invitation.email,
+            projectName: invitation.project.name,
+            projectDescription: invitation.project.description,
+            inviterName: invitation.invitedBy.name,
+            expiresAt: invitation.expiresAt
+        };
+    }
+    async getUserInvitations(email) {
+        const invitations = await this.invitationRepository.find({
+            where: { email, status: 'pending' },
+            relations: ['project', 'invitedBy'],
+            order: { createdAt: 'DESC' }
+        });
+        return invitations.map(invitation => ({
+            id: invitation.id,
+            projectName: invitation.project.name,
+            projectDescription: invitation.project.description,
+            inviterName: invitation.invitedBy.name,
+            createdAt: invitation.createdAt,
+            expiresAt: invitation.expiresAt
+        }));
+    }
+    async acceptInvitationById(invitationId, userId) {
+        const invitation = await this.invitationRepository.findOne({
+            where: { id: invitationId, status: 'pending' },
+            relations: ['project']
+        });
+        if (!invitation) {
+            throw new common_1.NotFoundException('Invitation not found');
+        }
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (user.email !== invitation.email) {
+            throw new common_1.BadRequestException('This invitation is not for your email address');
+        }
+        return this.acceptInvitation(invitation.token, userId);
+    }
+};
+exports.InvitationsService = InvitationsService;
+exports.InvitationsService = InvitationsService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(project_invitation_entity_1.ProjectInvitation)),
+    __param(1, (0, typeorm_1.InjectRepository)(project_entity_1.Project)),
+    __param(2, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object])
+], InvitationsService);
+
+
+/***/ }),
+
 /***/ "./src/modules/issues/dto/create-issue.dto.ts":
 /*!****************************************************!*\
   !*** ./src/modules/issues/dto/create-issue.dto.ts ***!
@@ -2849,17 +3699,22 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.IssuesModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
-const issues_controller_1 = __webpack_require__(/*! ./issues.controller */ "./src/modules/issues/issues.controller.ts");
 const issues_service_1 = __webpack_require__(/*! ./issues.service */ "./src/modules/issues/issues.service.ts");
+const issues_controller_1 = __webpack_require__(/*! ./issues.controller */ "./src/modules/issues/issues.controller.ts");
 const issue_entity_1 = __webpack_require__(/*! ../../entities/issue.entity */ "./src/entities/issue.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+const project_entity_1 = __webpack_require__(/*! ../../entities/project.entity */ "./src/entities/project.entity.ts");
+const notification_log_entity_1 = __webpack_require__(/*! ../../entities/notification-log.entity */ "./src/entities/notification-log.entity.ts");
+const email_service_1 = __webpack_require__(/*! ../auth/email.service */ "./src/modules/auth/email.service.ts");
+const notifications_service_1 = __webpack_require__(/*! ../notifications/notifications.service */ "./src/modules/notifications/notifications.service.ts");
 let IssuesModule = class IssuesModule {
 };
 exports.IssuesModule = IssuesModule;
 exports.IssuesModule = IssuesModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([issue_entity_1.Issue])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([issue_entity_1.Issue, user_entity_1.User, project_entity_1.Project, notification_log_entity_1.NotificationLog])],
         controllers: [issues_controller_1.IssuesController],
-        providers: [issues_service_1.IssuesService],
+        providers: [issues_service_1.IssuesService, email_service_1.EmailService, notifications_service_1.NotificationsService],
         exports: [issues_service_1.IssuesService],
     })
 ], IssuesModule);
@@ -2886,16 +3741,30 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.IssuesService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const issue_entity_1 = __webpack_require__(/*! ../../entities/issue.entity */ "./src/entities/issue.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+const project_entity_1 = __webpack_require__(/*! ../../entities/project.entity */ "./src/entities/project.entity.ts");
+const email_service_1 = __webpack_require__(/*! ../auth/email.service */ "./src/modules/auth/email.service.ts");
+const notifications_service_1 = __webpack_require__(/*! ../notifications/notifications.service */ "./src/modules/notifications/notifications.service.ts");
+const enums_1 = __webpack_require__(/*! ../../common/enums */ "./src/common/enums/index.ts");
 let IssuesService = class IssuesService {
-    constructor(issueRepository) {
+    constructor(issueRepository, userRepository, projectRepository, emailService, notificationsService) {
         this.issueRepository = issueRepository;
+        this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
+        this.emailService = emailService;
+        this.notificationsService = notificationsService;
     }
     async create(createIssueDto, reporterId) {
+        const project = await this.validateProjectAccess(createIssueDto.projectId, reporterId);
+        if (createIssueDto.assigneeId) {
+            await this.validateAssigneeAccess(createIssueDto.assigneeId, project);
+        }
         const issue = this.issueRepository.create({
             ...createIssueDto,
             attachments: createIssueDto.attachments || [],
@@ -2905,7 +3774,11 @@ let IssuesService = class IssuesService {
                 : null,
             project: { id: createIssueDto.projectId },
         });
-        return this.issueRepository.save(issue);
+        const savedIssue = await this.issueRepository.save(issue);
+        if (createIssueDto.assigneeId && createIssueDto.assigneeId !== reporterId) {
+            await this.sendIssueAssignmentNotifications(savedIssue, reporterId);
+        }
+        return savedIssue;
     }
     async findAll(query, userId) {
         const { page = 1, limit = 10, status, severity, projectId } = query;
@@ -2915,7 +3788,10 @@ let IssuesService = class IssuesService {
             .leftJoinAndSelect('issue.assignee', 'assignee')
             .leftJoinAndSelect('issue.reporter', 'reporter')
             .leftJoinAndSelect('issue.project', 'project')
-            .where('(issue.assigneeId = :userId OR issue.reporterId = :userId OR project.ownerId = :userId)', { userId });
+            .leftJoinAndSelect('project.members', 'members')
+            .where('(project.ownerId = :userId OR members.id = :userId)', {
+            userId,
+        });
         if (status) {
             queryBuilder.andWhere('issue.status = :status', { status });
         }
@@ -2941,31 +3817,91 @@ let IssuesService = class IssuesService {
     async findOne(id, userId) {
         const issue = await this.issueRepository.findOne({
             where: { id },
-            relations: ['assignee', 'reporter', 'project'],
+            relations: ['assignee', 'reporter', 'project', 'project.members', 'project.owner'],
         });
         if (!issue) {
             throw new common_1.NotFoundException(`Issue with ID ${id} not found`);
+        }
+        const hasAccess = issue.project.owner.id === userId ||
+            issue.project.members?.some((member) => member.id === userId);
+        if (!hasAccess) {
+            throw new common_1.ForbiddenException('You do not have access to this issue');
         }
         return issue;
     }
     async update(id, updateIssueDto, userId) {
         const issue = await this.findOne(id, userId);
+        const oldAssigneeId = issue.assignee?.id;
         if (updateIssueDto.attachments) {
             issue.attachments = updateIssueDto.attachments;
         }
         Object.assign(issue, updateIssueDto);
-        return this.issueRepository.save(issue);
+        const updatedIssue = await this.issueRepository.save(issue);
+        if (updateIssueDto.assigneeId && updateIssueDto.assigneeId !== oldAssigneeId && updateIssueDto.assigneeId !== userId) {
+            await this.sendIssueAssignmentNotifications(updatedIssue, userId);
+        }
+        return updatedIssue;
     }
     async remove(id, userId) {
         const issue = await this.findOne(id, userId);
         await this.issueRepository.softDelete(id);
+    }
+    async sendIssueAssignmentNotifications(issue, assignerId) {
+        try {
+            const assignee = await this.userRepository.findOne({
+                where: { id: issue.assignee.id },
+                relations: ['notifications']
+            });
+            const assigner = await this.userRepository.findOne({ where: { id: assignerId } });
+            if (!assignee || !assigner)
+                return;
+            await this.notificationsService.create(assignee.id, `You have been assigned to issue "${issue.title}" by ${assigner.name}`, enums_1.NotificationType.TASK_ASSIGNED);
+            await this.emailService.add('issue-assignment', {
+                email: assignee.email,
+                assigneeName: assignee.name,
+                issueTitle: issue.title,
+                issueDescription: issue.description,
+                issueId: issue.id,
+                assignerName: assigner.name,
+                severity: issue.severity
+            });
+        }
+        catch (error) {
+            console.error(`Failed to send issue assignment notifications:`, error);
+        }
+    }
+    async validateProjectAccess(projectId, userId) {
+        const project = await this.projectRepository.findOne({
+            where: { id: projectId },
+            relations: ['owner', 'members'],
+        });
+        if (!project) {
+            throw new common_1.NotFoundException(`Project with ID ${projectId} not found`);
+        }
+        const hasAccess = project.owner.id === userId ||
+            project.members?.some((member) => member.id === userId);
+        if (!hasAccess) {
+            throw new common_1.ForbiddenException('You do not have access to this project');
+        }
+        return project;
+    }
+    async validateAssigneeAccess(assigneeId, project) {
+        if (project.owner.id === assigneeId) {
+            return;
+        }
+        const isProjectMember = project.members?.some((member) => member.id === assigneeId);
+        if (!isProjectMember) {
+            throw new common_1.ForbiddenException('Issues can only be assigned to project members');
+        }
     }
 };
 exports.IssuesService = IssuesService;
 exports.IssuesService = IssuesService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(issue_entity_1.Issue)),
-    __metadata("design:paramtypes", [Object])
+    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(2, (0, typeorm_1.InjectRepository)(project_entity_1.Project)),
+    __metadata("design:paramtypes", [Object, Object, Object, typeof (_a = typeof email_service_1.EmailService !== "undefined" && email_service_1.EmailService) === "function" ? _a : Object, typeof (_b = typeof notifications_service_1.NotificationsService !== "undefined" && notifications_service_1.NotificationsService) === "function" ? _b : Object])
 ], IssuesService);
 
 
@@ -3198,10 +4134,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CreateProjectDto = void 0;
 const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
 const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const class_transformer_1 = __webpack_require__(/*! class-transformer */ "class-transformer");
 const enums_1 = __webpack_require__(/*! ../../../common/enums */ "./src/common/enums/index.ts");
 class CreateProjectDto {
     constructor() {
         this.priority = enums_1.Priority.MEDIUM;
+        this.status = 'not_started';
     }
 }
 exports.CreateProjectDto = CreateProjectDto;
@@ -3218,13 +4156,13 @@ __decorate([
 ], CreateProjectDto.prototype, "description", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: "2024-01-01" }),
-    (0, class_validator_1.IsDateString)(),
+    (0, class_transformer_1.Transform)(({ value }) => value ? new Date(value) : undefined),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
 ], CreateProjectDto.prototype, "startDate", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: "2024-06-01" }),
-    (0, class_validator_1.IsDateString)(),
+    (0, class_transformer_1.Transform)(({ value }) => value ? new Date(value) : undefined),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
 ], CreateProjectDto.prototype, "endDate", void 0);
@@ -3235,12 +4173,31 @@ __decorate([
     __metadata("design:type", typeof (_c = typeof enums_1.Priority !== "undefined" && enums_1.Priority) === "function" ? _c : Object)
 ], CreateProjectDto.prototype, "priority", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        enum: ['not_started', 'in_progress', 'completed', 'on_hold'],
+        default: 'not_started'
+    }),
+    (0, class_validator_1.IsEnum)(['not_started', 'in_progress', 'completed', 'on_hold']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProjectDto.prototype, "status", void 0);
+__decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: ["frontend", "backend", "e-commerce"] }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Array)
 ], CreateProjectDto.prototype, "tags", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        example: ["john@example.com", "jane@example.com"],
+        description: "Email addresses of users to invite as project members"
+    }),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsEmail)({}, { each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreateProjectDto.prototype, "memberEmails", void 0);
 
 
 /***/ }),
@@ -3300,6 +4257,7 @@ let ProjectsController = class ProjectsController {
         return this.projectsService.create(createProjectDto, req.user.id);
     }
     findAll(paginationDto, req) {
+        console.log('Projects Controller - User ID:', req.user.id);
         console.log('Projects Controller - Headers:', req.headers.authorization ? 'AUTH_HEADER_PRESENT' : 'AUTH_HEADER_MISSING');
         return this.projectsService.findAll(paginationDto, req.user.id);
     }
@@ -3391,14 +4349,19 @@ const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const projects_controller_1 = __webpack_require__(/*! ./projects.controller */ "./src/modules/projects/projects.controller.ts");
 const projects_service_1 = __webpack_require__(/*! ./projects.service */ "./src/modules/projects/projects.service.ts");
 const project_entity_1 = __webpack_require__(/*! ../../entities/project.entity */ "./src/entities/project.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+const project_invitation_entity_1 = __webpack_require__(/*! ../../entities/project-invitation.entity */ "./src/entities/project-invitation.entity.ts");
+const notification_log_entity_1 = __webpack_require__(/*! ../../entities/notification-log.entity */ "./src/entities/notification-log.entity.ts");
+const email_service_1 = __webpack_require__(/*! ../auth/email.service */ "./src/modules/auth/email.service.ts");
+const notifications_service_1 = __webpack_require__(/*! ../notifications/notifications.service */ "./src/modules/notifications/notifications.service.ts");
 let ProjectsModule = class ProjectsModule {
 };
 exports.ProjectsModule = ProjectsModule;
 exports.ProjectsModule = ProjectsModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([project_entity_1.Project])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([project_entity_1.Project, user_entity_1.User, project_invitation_entity_1.ProjectInvitation, notification_log_entity_1.NotificationLog])],
         controllers: [projects_controller_1.ProjectsController],
-        providers: [projects_service_1.ProjectsService],
+        providers: [projects_service_1.ProjectsService, email_service_1.EmailService, notifications_service_1.NotificationsService],
         exports: [projects_service_1.ProjectsService],
     })
 ], ProjectsModule);
@@ -3425,32 +4388,130 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ProjectsService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
 const project_entity_1 = __webpack_require__(/*! ../../entities/project.entity */ "./src/entities/project.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+const project_invitation_entity_1 = __webpack_require__(/*! ../../entities/project-invitation.entity */ "./src/entities/project-invitation.entity.ts");
+const email_service_1 = __webpack_require__(/*! ../auth/email.service */ "./src/modules/auth/email.service.ts");
+const notifications_service_1 = __webpack_require__(/*! ../notifications/notifications.service */ "./src/modules/notifications/notifications.service.ts");
+const enums_1 = __webpack_require__(/*! ../../common/enums */ "./src/common/enums/index.ts");
+const uuid_1 = __webpack_require__(/*! uuid */ "uuid");
 let ProjectsService = class ProjectsService {
-    constructor(projectRepository) {
+    constructor(projectRepository, userRepository, invitationRepository, emailService, notificationsService) {
         this.projectRepository = projectRepository;
+        this.userRepository = userRepository;
+        this.invitationRepository = invitationRepository;
+        this.emailService = emailService;
+        this.notificationsService = notificationsService;
     }
     async create(createProjectDto, ownerId) {
+        const { memberEmails, ...projectData } = createProjectDto;
+        const owner = await this.userRepository.findOne({ where: { id: ownerId } });
+        if (!owner) {
+            throw new common_1.NotFoundException('Owner not found');
+        }
         const project = this.projectRepository.create({
-            ...createProjectDto,
+            ...projectData,
             owner: { id: ownerId },
+            members: [{ id: ownerId }],
         });
-        return this.projectRepository.save(project);
+        const savedProject = await this.projectRepository.save(project);
+        if (memberEmails && memberEmails.length > 0) {
+            await this.inviteMembers(savedProject, memberEmails, owner);
+            const projectWithMembers = await this.projectRepository.findOne({
+                where: { id: savedProject.id },
+                relations: ['owner', 'members', 'tasks', 'issues'],
+            });
+            return projectWithMembers || savedProject;
+        }
+        return savedProject;
+    }
+    async inviteMembers(project, memberEmails, inviter) {
+        for (const email of memberEmails) {
+            if (email === inviter.email) {
+                continue;
+            }
+            const existingUser = await this.userRepository.findOne({ where: { email } });
+            if (existingUser) {
+                const currentProject = await this.projectRepository.findOne({
+                    where: { id: project.id },
+                    relations: ['members']
+                });
+                if (currentProject) {
+                    const isAlreadyMember = currentProject.members.some(member => member.id === existingUser.id);
+                    if (!isAlreadyMember) {
+                        currentProject.members.push(existingUser);
+                        await this.projectRepository.save(currentProject);
+                        try {
+                            await this.emailService.add('project-member-added', {
+                                email: existingUser.email,
+                                memberName: existingUser.name,
+                                projectName: project.name,
+                                projectDescription: project.description,
+                                projectId: project.id,
+                                inviterName: inviter.name
+                            });
+                        }
+                        catch (error) {
+                            console.error(`Failed to send member notification email to ${existingUser.email}:`, error);
+                        }
+                        try {
+                            await this.notificationsService.create(existingUser.id, `You have been added to project "${project.name}" by ${inviter.name}`, enums_1.NotificationType.PROJECT_MEMBER_ADDED);
+                        }
+                        catch (error) {
+                            console.error(`Failed to create in-app notification for user ${existingUser.id}:`, error);
+                        }
+                    }
+                }
+            }
+            else {
+                const invitationToken = (0, uuid_1.v4)();
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + 7);
+                const invitation = this.invitationRepository.create({
+                    email,
+                    token: invitationToken,
+                    expiresAt,
+                    project: { id: project.id },
+                    invitedBy: { id: inviter.id },
+                    status: 'pending'
+                });
+                await this.invitationRepository.save(invitation);
+                try {
+                    await this.emailService.add('project-invitation', {
+                        email,
+                        projectName: project.name,
+                        projectDescription: project.description,
+                        inviterName: inviter.name,
+                        invitationToken
+                    });
+                }
+                catch (error) {
+                    console.error(`Failed to send invitation email to ${email}:`, error);
+                }
+            }
+        }
     }
     async findAll(paginationDto, userId) {
         const { page = 1, limit = 10 } = paginationDto;
         const skip = (page - 1) * limit;
-        const [projects, total] = await this.projectRepository.findAndCount({
-            where: [{ owner: { id: userId } }, { members: { id: userId } }],
-            relations: ['owner', 'members'],
-            skip,
-            take: limit,
-            order: { createdAt: 'DESC' },
-        });
+        console.log('ProjectsService.findAll - User ID:', userId);
+        const queryBuilder = this.projectRepository
+            .createQueryBuilder('project')
+            .leftJoinAndSelect('project.owner', 'owner')
+            .leftJoinAndSelect('project.members', 'members')
+            .where('project.ownerId = :userId OR members.id = :userId', { userId })
+            .skip(skip)
+            .take(limit)
+            .orderBy('project.createdAt', 'DESC');
+        const [projects, total] = await queryBuilder.getManyAndCount();
+        console.log('ProjectsService.findAll - Found projects:', projects.length);
+        console.log('ProjectsService.findAll - Project IDs:', projects.map(p => p.id));
         return {
             data: projects,
             total,
@@ -3494,7 +4555,9 @@ exports.ProjectsService = ProjectsService;
 exports.ProjectsService = ProjectsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(project_entity_1.Project)),
-    __metadata("design:paramtypes", [Object])
+    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(2, (0, typeorm_1.InjectRepository)(project_invitation_entity_1.ProjectInvitation)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof email_service_1.EmailService !== "undefined" && email_service_1.EmailService) === "function" ? _d : Object, typeof (_e = typeof notifications_service_1.NotificationsService !== "undefined" && notifications_service_1.NotificationsService) === "function" ? _e : Object])
 ], ProjectsService);
 
 
@@ -3814,6 +4877,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CreateTaskDto = void 0;
 const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
 const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const class_transformer_1 = __webpack_require__(/*! class-transformer */ "class-transformer");
 const enums_1 = __webpack_require__(/*! ../../../common/enums */ "./src/common/enums/index.ts");
 class CreateTaskDto {
     constructor() {
@@ -3850,7 +4914,7 @@ __decorate([
 ], CreateTaskDto.prototype, "progress", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: "2024-12-31" }),
-    (0, class_validator_1.IsDateString)(),
+    (0, class_transformer_1.Transform)(({ value }) => value ? new Date(value) : undefined),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
 ], CreateTaskDto.prototype, "deadline", void 0);
@@ -3888,6 +4952,20 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Array)
 ], CreateTaskDto.prototype, "dependencyIds", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 8, description: "Estimated hours to complete the task" }),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateTaskDto.prototype, "estimatedHours", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: ["frontend", "urgent"], description: "Tags for categorizing tasks" }),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreateTaskDto.prototype, "tags", void 0);
 
 
 /***/ }),
@@ -4045,17 +5123,22 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TasksModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
-const tasks_controller_1 = __webpack_require__(/*! ./tasks.controller */ "./src/modules/tasks/tasks.controller.ts");
 const tasks_service_1 = __webpack_require__(/*! ./tasks.service */ "./src/modules/tasks/tasks.service.ts");
+const tasks_controller_1 = __webpack_require__(/*! ./tasks.controller */ "./src/modules/tasks/tasks.controller.ts");
 const task_entity_1 = __webpack_require__(/*! ../../entities/task.entity */ "./src/entities/task.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+const project_entity_1 = __webpack_require__(/*! ../../entities/project.entity */ "./src/entities/project.entity.ts");
+const notification_log_entity_1 = __webpack_require__(/*! ../../entities/notification-log.entity */ "./src/entities/notification-log.entity.ts");
+const email_service_1 = __webpack_require__(/*! ../auth/email.service */ "./src/modules/auth/email.service.ts");
+const notifications_service_1 = __webpack_require__(/*! ../notifications/notifications.service */ "./src/modules/notifications/notifications.service.ts");
 let TasksModule = class TasksModule {
 };
 exports.TasksModule = TasksModule;
 exports.TasksModule = TasksModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([task_entity_1.Task])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([task_entity_1.Task, user_entity_1.User, project_entity_1.Project, notification_log_entity_1.NotificationLog])],
         controllers: [tasks_controller_1.TasksController],
-        providers: [tasks_service_1.TasksService],
+        providers: [tasks_service_1.TasksService, email_service_1.EmailService, notifications_service_1.NotificationsService],
         exports: [tasks_service_1.TasksService],
     })
 ], TasksModule);
@@ -4082,16 +5165,33 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TasksService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const task_entity_1 = __webpack_require__(/*! ../../entities/task.entity */ "./src/entities/task.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ../../entities/user.entity */ "./src/entities/user.entity.ts");
+const project_entity_1 = __webpack_require__(/*! ../../entities/project.entity */ "./src/entities/project.entity.ts");
+const email_service_1 = __webpack_require__(/*! ../auth/email.service */ "./src/modules/auth/email.service.ts");
+const notifications_service_1 = __webpack_require__(/*! ../notifications/notifications.service */ "./src/modules/notifications/notifications.service.ts");
+const enums_1 = __webpack_require__(/*! ../../common/enums */ "./src/common/enums/index.ts");
 let TasksService = class TasksService {
-    constructor(taskRepository) {
+    constructor(taskRepository, userRepository, projectRepository, emailService, notificationsService) {
         this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
+        this.emailService = emailService;
+        this.notificationsService = notificationsService;
     }
     async create(createTaskDto, creatorId) {
+        const project = await this.validateProjectAccess(createTaskDto.projectId, creatorId);
+        if (createTaskDto.assigneeId && createTaskDto.assigneeId !== creatorId) {
+            if (project.owner.id !== creatorId) {
+                throw new common_1.ForbiddenException('Only project owners can assign tasks to other members');
+            }
+            await this.validateAssigneeAccess(createTaskDto.assigneeId, project);
+        }
         const task = this.taskRepository.create({
             ...createTaskDto,
             attachments: createTaskDto.attachments || [],
@@ -4100,7 +5200,11 @@ let TasksService = class TasksService {
                 : null,
             project: { id: createTaskDto.projectId },
         });
-        return this.taskRepository.save(task);
+        const savedTask = await this.taskRepository.save(task);
+        if (createTaskDto.assigneeId && createTaskDto.assigneeId !== creatorId) {
+            await this.sendTaskAssignmentNotifications(savedTask, creatorId, 'assigned');
+        }
+        return savedTask;
     }
     async findAll(query, userId) {
         const { page = 1, limit = 10, status, projectId, assigneeId } = query;
@@ -4109,8 +5213,9 @@ let TasksService = class TasksService {
             .createQueryBuilder('task')
             .leftJoinAndSelect('task.assignee', 'assignee')
             .leftJoinAndSelect('task.project', 'project')
+            .leftJoinAndSelect('project.members', 'members')
             .leftJoinAndSelect('task.subtasks', 'subtasks')
-            .where('(task.assigneeId = :userId OR project.ownerId = :userId)', {
+            .where('(project.ownerId = :userId OR members.id = :userId)', {
             userId,
         });
         if (status) {
@@ -4138,20 +5243,39 @@ let TasksService = class TasksService {
     async findOne(id, userId) {
         const task = await this.taskRepository.findOne({
             where: { id },
-            relations: ['assignee', 'project', 'subtasks', 'dependencies'],
+            relations: ['assignee', 'project', 'project.members', 'project.owner', 'subtasks', 'dependencies'],
         });
         if (!task) {
             throw new common_1.NotFoundException(`Task with ID ${id} not found`);
+        }
+        const hasAccess = task.project.owner.id === userId ||
+            task.project.members?.some((member) => member.id === userId);
+        if (!hasAccess) {
+            throw new common_1.ForbiddenException('You do not have access to this task');
         }
         return task;
     }
     async update(id, updateTaskDto, userId) {
         const task = await this.findOne(id, userId);
+        const oldAssigneeId = task.assignee?.id;
+        if (updateTaskDto.assigneeId && updateTaskDto.assigneeId !== userId && updateTaskDto.assigneeId !== oldAssigneeId) {
+            if (task.project.owner.id !== userId) {
+                throw new common_1.ForbiddenException('Only project owners can assign tasks to other members');
+            }
+            await this.validateAssigneeAccess(updateTaskDto.assigneeId, task.project);
+        }
         if (updateTaskDto.attachments) {
             task.attachments = updateTaskDto.attachments;
         }
         Object.assign(task, updateTaskDto);
-        return this.taskRepository.save(task);
+        const updatedTask = await this.taskRepository.save(task);
+        if (updateTaskDto.assigneeId && updateTaskDto.assigneeId !== oldAssigneeId && updateTaskDto.assigneeId !== userId) {
+            await this.sendTaskAssignmentNotifications(updatedTask, userId, 'assigned');
+        }
+        if (updateTaskDto.status && updateTaskDto.status !== task.status) {
+            await this.sendTaskUpdateNotifications(updatedTask, userId, 'status_updated');
+        }
+        return updatedTask;
     }
     async remove(id, userId) {
         const task = await this.findOne(id, userId);
@@ -4164,12 +5288,89 @@ let TasksService = class TasksService {
         subtask.parentTaskId = parentTask.id;
         return this.taskRepository.save(subtask);
     }
+    async sendTaskAssignmentNotifications(task, assignerId, action) {
+        try {
+            const assignee = await this.userRepository.findOne({
+                where: { id: task.assignee.id },
+                relations: ['notifications']
+            });
+            const assigner = await this.userRepository.findOne({ where: { id: assignerId } });
+            if (!assignee || !assigner)
+                return;
+            await this.notificationsService.create(assignee.id, `You have been assigned to task "${task.title}" by ${assigner.name}`, enums_1.NotificationType.TASK_ASSIGNED);
+            await this.emailService.add('task-assignment', {
+                email: assignee.email,
+                assigneeName: assignee.name,
+                taskTitle: task.title,
+                taskDescription: task.description,
+                taskId: task.id,
+                assignerName: assigner.name,
+                dueDate: task.deadline,
+                priority: task.priority
+            });
+        }
+        catch (error) {
+            console.error(`Failed to send task assignment notifications:`, error);
+        }
+    }
+    async sendTaskUpdateNotifications(task, updaterId, updateType) {
+        try {
+            const assignee = await this.userRepository.findOne({
+                where: { id: task.assignee?.id },
+                relations: ['notifications']
+            });
+            const updater = await this.userRepository.findOne({ where: { id: updaterId } });
+            if (!assignee || !updater || assignee.id === updater.id)
+                return;
+            await this.notificationsService.create(assignee.id, `Task "${task.title}" has been updated by ${updater.name}. Status: ${task.status}`, enums_1.NotificationType.TASK_UPDATED);
+            if (task.status === 'done' || task.status === 'blocked') {
+                await this.emailService.add('task-update', {
+                    email: assignee.email,
+                    assigneeName: assignee.name,
+                    taskTitle: task.title,
+                    taskId: task.id,
+                    updaterName: updater.name,
+                    newStatus: task.status,
+                    updateType
+                });
+            }
+        }
+        catch (error) {
+            console.error(`Failed to send task update notifications:`, error);
+        }
+    }
+    async validateProjectAccess(projectId, userId) {
+        const project = await this.projectRepository.findOne({
+            where: { id: projectId },
+            relations: ['owner', 'members'],
+        });
+        if (!project) {
+            throw new common_1.NotFoundException(`Project with ID ${projectId} not found`);
+        }
+        const hasAccess = project.owner.id === userId ||
+            project.members?.some((member) => member.id === userId);
+        if (!hasAccess) {
+            throw new common_1.ForbiddenException('You do not have access to this project');
+        }
+        return project;
+    }
+    async validateAssigneeAccess(assigneeId, project) {
+        if (project.owner.id === assigneeId) {
+            return;
+        }
+        const isProjectMember = project.members?.some((member) => member.id === assigneeId);
+        if (!isProjectMember) {
+            throw new common_1.ForbiddenException('Tasks can only be assigned to project members');
+        }
+    }
 };
 exports.TasksService = TasksService;
 exports.TasksService = TasksService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(task_entity_1.Task)),
-    __metadata("design:paramtypes", [Object])
+    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(2, (0, typeorm_1.InjectRepository)(project_entity_1.Project)),
+    __metadata("design:paramtypes", [Object, Object, Object, typeof (_a = typeof email_service_1.EmailService !== "undefined" && email_service_1.EmailService) === "function" ? _a : Object, typeof (_b = typeof notifications_service_1.NotificationsService !== "undefined" && notifications_service_1.NotificationsService) === "function" ? _b : Object])
 ], TasksService);
 
 
@@ -5351,6 +6552,16 @@ module.exports = require("rxjs/operators");
 
 module.exports = require("typeorm");
 
+/***/ }),
+
+/***/ "uuid":
+/*!***********************!*\
+  !*** external "uuid" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("uuid");
+
 /***/ })
 
 /******/ 	});
@@ -5437,7 +6648,8 @@ async function bootstrap() {
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
     swagger_1.SwaggerModule.setup("api/docs", app, document);
-    const port = configService.get("PORT") || 3000;
+    const port = configService.get('PORT') || 3001;
+    console.log(`🔧 Port configuration: ${port}`);
     await app.listen(port);
     console.log(`🚀 Application is running on: http://localhost:${port}`);
     console.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
