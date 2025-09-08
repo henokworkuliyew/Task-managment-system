@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsEnum, IsDateString, IsArray } from "class-validator"
+import { IsString, IsOptional, IsEnum, IsDateString, IsArray, IsEmail } from "class-validator"
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
+import { Transform } from "class-transformer"
 import { Priority } from "../../../common/enums"
 
 export class CreateProjectDto {
@@ -13,12 +14,12 @@ export class CreateProjectDto {
   description?: string
 
   @ApiPropertyOptional({ example: "2024-01-01" })
-  @IsDateString()
+  @Transform(({ value }) => value ? new Date(value) : undefined)
   @IsOptional()
   startDate?: Date
 
   @ApiPropertyOptional({ example: "2024-06-01" })
-  @IsDateString()
+  @Transform(({ value }) => value ? new Date(value) : undefined)
   @IsOptional()
   endDate?: Date
 
@@ -27,9 +28,26 @@ export class CreateProjectDto {
   @IsOptional()
   priority?: Priority = Priority.MEDIUM
 
+  @ApiPropertyOptional({ 
+    enum: ['not_started', 'in_progress', 'completed', 'on_hold'], 
+    default: 'not_started' 
+  })
+  @IsEnum(['not_started', 'in_progress', 'completed', 'on_hold'])
+  @IsOptional()
+  status?: string = 'not_started'
+
   @ApiPropertyOptional({ example: ["frontend", "backend", "e-commerce"] })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   tags?: string[]
+
+  @ApiPropertyOptional({ 
+    example: ["john@example.com", "jane@example.com"], 
+    description: "Email addresses of users to invite as project members" 
+  })
+  @IsArray()
+  @IsEmail({}, { each: true })
+  @IsOptional()
+  memberEmails?: string[]
 }
