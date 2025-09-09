@@ -1,26 +1,26 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { taskService } from '../../services';
-import { TaskState, Task, Priority } from '../../types';
+import { TaskState, Task, Priority, TaskStatus } from '../../types';
 import { getStoredState, setStoredState, STORAGE_KEYS } from '../../utils/localStorage';
 
-interface CreateTaskData {
+export interface CreateTaskData {
   title: string;
   description: string;
   projectId: string;
   assignedTo?: string;
   deadline: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'todo' | 'in_progress' | 'review' | 'done';
+  priority: Priority;
+  status: TaskStatus;
 }
 
-interface UpdateTaskData {
+export interface UpdateTaskData {
   title?: string;
   description?: string;
   projectId?: string;
   assignedTo?: string;
   deadline?: string;
-  priority?: 'low' | 'medium' | 'high';
-  status?: 'todo' | 'in_progress' | 'review' | 'done';
+  priority?: Priority;
+  status?: TaskStatus;
   id?: string;
 }
 
@@ -79,7 +79,15 @@ export const createTask = createAsyncThunk(
   'tasks/createTask',
   async (data: CreateTaskData, { rejectWithValue }) => {
     try {
-      const task = await taskService.createTask(data);
+      const task = await taskService.createTask({
+        title: data.title,
+        description: data.description,
+        projectId: data.projectId,
+        assignedTo: data.assignedTo,
+        deadline: data.deadline,
+        priority: data.priority as 'low' | 'medium' | 'high',
+        status: data.status as 'todo' | 'in_progress' | 'review' | 'done'
+      });
       return task;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to create task';
@@ -92,7 +100,17 @@ export const updateTask = createAsyncThunk(
   'tasks/updateTask',
   async ({ id, data }: { id: string; data: UpdateTaskData }, { rejectWithValue }) => {
     try {
-      const task = await taskService.updateTask({ ...data, id });
+      const updatePayload = {
+        id,
+        title: data.title,
+        description: data.description,
+        projectId: data.projectId,
+        assignedTo: data.assignedTo,
+        deadline: data.deadline,
+        priority: data.priority as 'low' | 'medium' | 'high' | undefined,
+        status: data.status as 'todo' | 'in_progress' | 'review' | 'done' | undefined
+      };
+      const task = await taskService.updateTask(updatePayload);
       return task;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update task';
