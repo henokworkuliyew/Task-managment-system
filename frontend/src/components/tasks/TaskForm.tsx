@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { createTask, updateTask } from '../../redux/slices/taskSlice';
 import { fetchProjects } from '../../redux/slices/projectSlice';
 import { Task, Priority, Project, User, TaskStatus } from '../../types';
+import { CreateTaskData, UpdateTaskData } from '../../redux/slices/taskSlice';
 import { FiSave, FiX } from 'react-icons/fi';
 
 interface TaskFormProps {
@@ -40,10 +41,8 @@ const TaskForm = ({
   const storeProjects = useAppSelector((state) => state.projects.projects);
   const currentUser = useAppSelector((state) => state.auth.user);
   
-  // Use prop projects if provided, otherwise use store projects
   const projects = propProjects || storeProjects;
   
-  // State for project members
   const [projectMembers, setProjectMembers] = useState<User[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
@@ -52,7 +51,6 @@ const TaskForm = ({
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
-    // Only fetch projects if we don't have any projects loaded
     if (!Array.isArray(projects) || projects.length === 0) {
       dispatch(fetchProjects({}));
     }
@@ -89,19 +87,16 @@ const TaskForm = ({
     assigneeId: Yup.string(),
   });
 
-  // Fetch project members when project is selected
   useEffect(() => {
     const fetchProjectMembers = async () => {
       if (selectedProjectId) {
         setLoadingMembers(true);
         try {
-          // Find the selected project and get its members
           const foundProject = projects?.find((p: Project) => p.id === selectedProjectId);
           if (foundProject && foundProject.members) {
             setSelectedProject(foundProject);
             setProjectMembers([foundProject.owner, ...foundProject.members]);
           } else {
-            // If project doesn't have members loaded, fetch project details
             const token = localStorage.getItem('accessToken');
             if (!token || token === 'undefined' || token === 'null') {
               console.error('No valid access token found');
@@ -142,33 +137,26 @@ const TaskForm = ({
       try {
         setIsSubmitting(true);
         
-        // If custom onSubmit is provided, use it
         if (propOnSubmit) {
           await propOnSubmit(values);
           return;
         }
         
         if (isEditing && task) {
-          // Clean up the data for updating
-          const updateData: Partial<Task> = {
+          const updateData: UpdateTaskData = {
             title: values.title,
             description: values.description || undefined,
             status: values.status,
             priority: values.priority,
             projectId: values.projectId,
-            estimatedHours: values.estimatedHours || 0,
-            progress: values.progress || 0,
-            tags: values.tags || [],
           };
 
-          // Only include deadline if it has a value
           if (values.deadline) {
             updateData.deadline = values.deadline;
           }
 
-          // Only include assigneeId if it has a valid UUID value
           if (values.assigneeId && values.assigneeId.trim() !== '') {
-            updateData.assigneeId = values.assigneeId;
+            updateData.assignedTo = values.assigneeId;
           }
 
           const result = await dispatch(updateTask({ id: task.id, data: updateData }));
@@ -181,26 +169,17 @@ const TaskForm = ({
             throw new Error('Failed to update task');
           }
         } else {
-          // Clean up the data for creating
-          const createData: Partial<Task> = {
+          const createData: CreateTaskData = {
             title: values.title,
             description: values.description || '',
             status: values.status,
             priority: values.priority,
             projectId: values.projectId,
-            estimatedHours: values.estimatedHours || 0,
-            progress: values.progress || 0,
-            tags: values.tags || [],
+            deadline: values.deadline || '',
           };
 
-          // Only include deadline if it has a value
-          if (values.deadline) {
-            createData.deadline = values.deadline;
-          }
-
-          // Only include assigneeId if it has a valid UUID value
           if (values.assigneeId && values.assigneeId.trim() !== '') {
-            createData.assigneeId = values.assigneeId;
+            createData.assignedTo = values.assigneeId;
           }
 
           const result = await dispatch(createTask(createData));
