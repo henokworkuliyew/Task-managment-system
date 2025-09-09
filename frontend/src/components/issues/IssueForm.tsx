@@ -36,7 +36,7 @@ const IssueForm = ({ issue, onSuccess, onCancel }: IssueFormProps) => {
     description: issue?.description || '',
     status: issue?.status || 'open',
     severity: issue?.severity || 'medium',
-    projectId: issue?.projectId || projectId || '',
+    projectId: issue?.projectId || '',
     assigneeId: issue?.assignee?.id || '',
   };
 
@@ -59,9 +59,9 @@ const IssueForm = ({ issue, onSuccess, onCancel }: IssueFormProps) => {
     onSubmit: async (values) => {
       try {
         setIsSubmitting(true);
-        // Clean up the data to match backend expectations
-        // Create properly typed data for the service
+        
         const baseData = {
+          id: issue?.id || '',
           title: values.title || '',
           description: values.description || '',
           status: values.status as 'open' | 'in_progress' | 'resolved' | 'closed',
