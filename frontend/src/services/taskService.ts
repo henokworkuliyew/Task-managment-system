@@ -1,5 +1,5 @@
 import api from './api';
-import { Task } from '../types';
+import { Task, Priority, TaskStatus } from '../types';
 
 export interface CreateTaskData {
   title: string;
@@ -7,8 +7,8 @@ export interface CreateTaskData {
   projectId: string;
   assignedTo?: string;
   deadline: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'todo' | 'in_progress' | 'review' | 'done';
+  priority: Priority;
+  status: TaskStatus;
 }
 
 export interface UpdateTaskData extends Partial<CreateTaskData> {
