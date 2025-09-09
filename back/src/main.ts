@@ -32,9 +32,9 @@ async function bootstrap() {
   // CORS configuration
   app.enableCors({
     origin:
-      process.env.NODE_ENV === "production"
-        ? ["https://yourdomain.com"]
-        : ["http://localhost:3000", "http://localhost:3001"],
+      process.env.NODE_ENV === 'production'
+        ? [configService.get<string>('FRONTEND_URL')]
+        : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
   })
 
