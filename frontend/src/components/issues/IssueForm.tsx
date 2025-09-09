@@ -37,7 +37,7 @@ const IssueForm = ({ issue, projectId, onSuccess, onCancel }: IssueFormProps) =>
     description: issue?.description || '',
     status: issue?.status || 'open',
     severity: issue?.severity || 'medium',
-    projectId: issue?.projectId ||  '',
+    projectId: issue?.projectId || projectId || '',
     assigneeId: issue?.assignee?.id || '',
   };
 
