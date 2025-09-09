@@ -1,7 +1,6 @@
 import authService from '../services/authService';
 import { AxiosInstance, AxiosRequestConfig } from 'axios';
 
-// Queue for failed requests during token refresh
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
@@ -20,10 +19,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
-/**
- * Helper function to safely get tokens from localStorage
- * Filters out invalid values like "undefined", "null", empty strings
- */
+
 const getStoredToken = (tokenType: 'accessToken' | 'refreshToken'): string | null => {
   if (typeof window === 'undefined') return null;
   
