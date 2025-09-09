@@ -30,6 +30,14 @@ interface PaginationParams {
   sortOrder?: 'ASC' | 'DESC';
 }
 
+interface ApiResponse {
+  data: Project[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 const initialState: ProjectState = {
   projects: getStoredState(STORAGE_KEYS.PROJECTS) || [],
   currentProject: null,
@@ -42,21 +50,27 @@ export const fetchProjects = createAsyncThunk<{ data: Project[]; totalCount: num
   'projects/fetchProjects',
   async (params: PaginationParams = {}, { rejectWithValue }) => {
     try {
-      const projects = await projectService.getAllProjects();
-      console.log('Fetched projects from API:', projects);
+      const response = await projectService.getAllProjects() as ApiResponse;
+      
+      if (response?.data && Array.isArray(response.data)) {
+        return {
+          data: response.data,
+          totalCount: response.total || 0
+        };
+      }
+      
       return {
-        data: Array.isArray(projects) ? projects : [],
-        totalCount: Array.isArray(projects) ? projects.length : 0
+        data: [],
+        totalCount: 0
       };
     } catch (error: unknown) {
-      console.error('Error fetching projects:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch projects';
       return rejectWithValue(errorMessage);
     }
   }
 );
 
-export const fetchProjectById = createAsyncThunk(
+export const fetchProjectById = createAsyncThunk<Project, string>(
   'projects/fetchProjectById',
   async (id: string, { rejectWithValue }) => {
     try {
@@ -69,7 +83,7 @@ export const fetchProjectById = createAsyncThunk(
   }
 );
 
-export const createProject = createAsyncThunk(
+export const createProject = createAsyncThunk<Project, CreateProjectData>(
   'projects/createProject',
   async (data: CreateProjectData, { rejectWithValue }) => {
     try {
@@ -82,7 +96,7 @@ export const createProject = createAsyncThunk(
   }
 );
 
-export const updateProject = createAsyncThunk(
+export const updateProject = createAsyncThunk<Project, { id: string; data: UpdateProjectData }>(
   'projects/updateProject',
   async ({ id, data }: { id: string; data: UpdateProjectData }, { rejectWithValue }) => {
     try {
@@ -95,7 +109,7 @@ export const updateProject = createAsyncThunk(
   }
 );
 
-export const deleteProject = createAsyncThunk(
+export const deleteProject = createAsyncThunk<string, string>(
   'projects/deleteProject',
   async (id: string, { rejectWithValue }) => {
     try {
@@ -108,7 +122,7 @@ export const deleteProject = createAsyncThunk(
   }
 );
 
-export const addProjectMember = createAsyncThunk(
+export const addProjectMember = createAsyncThunk<{ projectId: string; userId: string }, { projectId: string; userId: string; role?: string }>(
   'projects/addMember',
   async ({ projectId, userId, role = 'member' }: { projectId: string; userId: string; role?: string }, { rejectWithValue }) => {
     try {
@@ -121,7 +135,7 @@ export const addProjectMember = createAsyncThunk(
   }
 );
 
-export const removeProjectMember = createAsyncThunk(
+export const removeProjectMember = createAsyncThunk<{ projectId: string; userId: string }, { projectId: string; userId: string }>(
   'projects/removeMember',
   async ({ projectId, userId }: { projectId: string; userId: string }, { rejectWithValue }) => {
     try {
@@ -146,27 +160,21 @@ const projectSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Fetch Projects
     builder.addCase(fetchProjects.pending, (state) => {
       state.isLoading = true;
       state.error = null;
     });
     builder.addCase(fetchProjects.fulfilled, (state, action: PayloadAction<{ data: Project[]; totalCount: number }>) => {
       state.isLoading = false;
-      console.log('Projects fetch fulfilled with payload:', action.payload);
-      // Always update state with the fetched data
-      state.projects = Array.isArray(action.payload.data) ? action.payload.data : [];
-      state.totalCount = action.payload.totalCount || 0;
-      // Persist to localStorage
+      state.projects = action.payload.data;
+      state.totalCount = action.payload.totalCount;
       setStoredState(STORAGE_KEYS.PROJECTS, state.projects);
-      console.log('Updated projects state:', state.projects);
     });
     builder.addCase(fetchProjects.rejected, (state, action) => {
       state.isLoading = false;
       state.error = action.payload as string;
     });
 
-    // Fetch Project By Id
     builder.addCase(fetchProjectById.pending, (state) => {
       state.isLoading = true;
       state.error = null;
@@ -180,26 +188,16 @@ const projectSlice = createSlice({
       state.error = action.payload as string;
     });
 
-    // Create Project
     builder.addCase(createProject.pending, (state) => {
       state.isLoading = true;
       state.error = null;
     });
     builder.addCase(createProject.fulfilled, (state, action: PayloadAction<Project>) => {
       state.isLoading = false;
-      if (Array.isArray(state.projects)) {
-        // Check if project already exists to avoid duplicates
-        const existingProject = state.projects.find(p => p.id === action.payload.id);
-        if (!existingProject) {
-          state.projects.push(action.payload);
-          state.totalCount += 1;
-          // Persist to localStorage
-          setStoredState(STORAGE_KEYS.PROJECTS, state.projects);
-        }
-      } else {
-        state.projects = [action.payload];
-        state.totalCount = 1;
-        // Persist to localStorage
+      const existingProject = state.projects.find(p => p.id === action.payload.id);
+      if (!existingProject) {
+        state.projects.push(action.payload);
+        state.totalCount += 1;
         setStoredState(STORAGE_KEYS.PROJECTS, state.projects);
       }
     });
@@ -208,7 +206,6 @@ const projectSlice = createSlice({
       state.error = action.payload as string;
     });
 
-    // Update Project
     builder.addCase(updateProject.pending, (state) => {
       state.isLoading = true;
       state.error = null;
@@ -227,7 +224,6 @@ const projectSlice = createSlice({
       state.error = action.payload as string;
     });
 
-    // Delete Project
     builder.addCase(deleteProject.pending, (state) => {
       state.isLoading = true;
       state.error = null;

@@ -17,7 +17,9 @@ export interface UpdateProjectData extends Partial<CreateProjectData> {
 const projectService = {
   
   getAllProjects: async () => {
-    const response = await api.get<{success: boolean, data: Project[], timestamp: string}>('/projects');
+    const response = await api.get<{success: boolean, data: {data: Project[], total: number, page: number, limit: number, totalPages: number}, timestamp: string}>('/projects');
+    console.log('Raw API response:', response.data);
+    // Return the complete paginated response structure from backend
     return response.data.data;
   },
 

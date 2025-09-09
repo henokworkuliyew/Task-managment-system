@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { fetchProjects } from '../../redux/slices/projectSlice';
 import { ProjectCard } from '../../components/projects';
 import { Button, Card } from '../../components/common';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { FiPlus, FiFilter } from 'react-icons/fi';
 import { Project } from '@/types';
 
@@ -16,7 +17,6 @@ export default function ProjectsPage() {
   const [filterPriority, setFilterPriority] = useState<string>('');
 
   useEffect(() => {
-    // Smart fetching: only fetch if we don't have data already (like social media apps)
     if (!Array.isArray(projects) || projects.length === 0) {
       dispatch(fetchProjects({}));
     }
@@ -27,10 +27,6 @@ export default function ProjectsPage() {
         ? projects.filter((project: Project) => project.priority === filterPriority)
         : projects)
     : [];
-
-  // const handleCreateSuccess = () => {
-  //   // No need to refetch - Redux will update automatically when project is created
-  // };
 
   return (
       <div className="p-6">
@@ -53,10 +49,7 @@ export default function ProjectsPage() {
             <Button
               variant="primary"
               icon={FiPlus}
-              onClick={() => {
-                console.log('New Project button clicked - navigating to /projects/new');
-                router.push('/projects/new');
-              }}
+              onClick={() => router.push('/projects/new')}
             >
               New Project
             </Button>
@@ -64,9 +57,7 @@ export default function ProjectsPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
+          <LoadingSkeleton variant="card" rows={6} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" />
         ) : filteredProjects.length === 0 ? (
           <Card className="text-center py-12">
             <h3 className="text-lg font-medium text-gray-900">No projects found</h3>
