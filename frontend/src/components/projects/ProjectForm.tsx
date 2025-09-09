@@ -84,10 +84,11 @@ const ProjectForm = ({ project, onSuccess, onCancel }: ProjectFormProps) => {
 
         const projectData = {
           ...values,
-          startDate: values.startDate || undefined,
-          endDate: values.endDate || undefined,
+          startDate: values.startDate || '',
+          endDate: values.endDate || '',
           tags: values.tags ? values.tags.split(',').map(tag => tag.trim()) : [],
           memberEmails: validMemberEmails.length > 0 ? validMemberEmails : undefined,
+          status: project?.status || 'not_started',
         };
 
         if (isEditing && project) {
