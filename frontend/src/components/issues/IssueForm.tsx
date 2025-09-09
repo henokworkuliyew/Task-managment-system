@@ -12,11 +12,12 @@ import { FiSave, FiX } from 'react-icons/fi';
 
 interface IssueFormProps {
   issue?: Issue | null;
+  projectId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-const IssueForm = ({ issue, onSuccess, onCancel }: IssueFormProps) => {
+const IssueForm = ({ issue, projectId, onSuccess, onCancel }: IssueFormProps) => {
   const dispatch = useAppDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!issue;
