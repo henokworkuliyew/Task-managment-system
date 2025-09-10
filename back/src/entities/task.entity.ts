@@ -13,8 +13,9 @@ import {
 import { TaskStatus, Priority } from "../common/enums"
 import { User } from "./user.entity"
 import { Project } from "./project.entity"
-import { Comment } from "./comment.entity"
-import { TimeLog } from "./time-log.entity"
+import { Comment } from './comment.entity'
+import { TimeLog } from './time-log.entity'
+import { CalendarEvent } from './calendar-event.entity'
 
 @Entity("tasks")
 @Index(["status"])
@@ -121,11 +122,11 @@ export class Task {
   )
   dependentTasks: Task[]
 
-  @OneToMany(
-    () => Comment,
-    (comment) => comment.task,
-  )
+  @OneToMany(() => Comment, (comment) => comment.task)
   comments: Comment[]
+
+  @OneToMany(() => CalendarEvent, (event) => event.task, { cascade: true })
+  calendarEvents: CalendarEvent[]
 
   @OneToMany(
     () => TimeLog,

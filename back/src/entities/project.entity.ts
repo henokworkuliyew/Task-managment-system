@@ -14,7 +14,9 @@ import { Priority } from '../common/enums'
 import { User } from './user.entity'
 import { Task } from './task.entity'
 import { Issue } from './issue.entity'
+import { CalendarEvent } from './calendar-event.entity'
 import { Comment } from './comment.entity'
+import { Message } from './message.entity'
 
 @Entity('projects')
 @Index(['owner'])
@@ -82,6 +84,12 @@ export class Project {
 
   @OneToMany(() => Issue, (issue) => issue.project)
   issues: Issue[]
+
+  @OneToMany(() => CalendarEvent, (event) => event.project, { cascade: true })
+  calendarEvents: CalendarEvent[]
+
+  @OneToMany(() => Message, (message) => message.project)
+  messages: Message[]
 
   @OneToMany(() => Comment, (comment) => comment.project)
   comments: Comment[]

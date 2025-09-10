@@ -16,8 +16,10 @@ import { Project } from './project.entity'
 import { Task } from './task.entity'
 import { Issue } from './issue.entity'
 import { Comment } from './comment.entity'
-import { NotificationLog } from './notification-log.entity'
+import { NotificationLog } from "./notification-log.entity"
+import { CalendarEvent } from "./calendar-event.entity"
 import { TimeLog } from './time-log.entity'
+import { Message } from './message.entity'
 
 @Entity('users')
 @Index(['email'], { unique: true })
@@ -105,6 +107,12 @@ export class User {
 
   @OneToMany(() => NotificationLog, (notification) => notification.user)
   notifications: NotificationLog[]
+
+  @OneToMany(() => CalendarEvent, (event) => event.createdBy, { cascade: true })
+  calendarEvents: CalendarEvent[]
+
+  @OneToMany(() => Message, (message) => message.sender)
+  sentMessages: Message[]
 
   @OneToMany(() => TimeLog, (timeLog) => timeLog.user)
   timeLogs: TimeLog[]

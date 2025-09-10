@@ -11,6 +11,8 @@ import { NotificationLog } from '../entities/notification-log.entity'
 import { TimeLog } from '../entities/time-log.entity'
 import { AuditLog } from '../entities/audit-log.entity'
 import { Webhook } from '../entities/webhook.entity'
+import { CalendarEvent } from '../entities/calendar-event.entity'
+import { Message } from '../entities/message.entity'
 
 export const databaseConfig = (
   configService: ConfigService
@@ -29,7 +31,6 @@ export const databaseConfig = (
   const commonConfig = {
     entities: [
       User,
-      PendingRegistration,
       Project,
       ProjectInvitation,
       Task,
@@ -39,6 +40,8 @@ export const databaseConfig = (
       TimeLog,
       AuditLog,
       Webhook,
+      CalendarEvent,
+      Message,
     ],
     synchronize: isDevMode,
     logging: ['error', 'schema', 'migration'] as any,
