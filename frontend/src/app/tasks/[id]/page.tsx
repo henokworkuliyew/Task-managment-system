@@ -42,10 +42,6 @@ export default function TaskDetailPage() {
     }
   }, [dispatch, id, projects]);
 
-  // const handleEditSuccess = () => {
-  //   setIsEditModalOpen(false);
-  //   dispatch(fetchTaskById(id as string));
-  // };
 
   if (taskLoading) {
     return (
