@@ -21,25 +21,16 @@ export default function DashboardPage() {
  
  
   useEffect(() => {
-    // Only fetch data if user is authenticated
     if (!user) {
       return;
     }
     
-    // Smart fetching: only fetch if we don't have data already (like social media apps)
-    if (!Array.isArray(projects) || projects.length === 0) {
-      dispatch(fetchProjects({}));
-    }
-    if (!Array.isArray(tasks) || tasks.length === 0) {
-      dispatch(fetchTasks({}));
-    }
-    if (!Array.isArray(issues) || issues.length === 0) {
-      dispatch(fetchIssues({}));
-    }
-    // Always fetch notifications as they're time-sensitive
+    dispatch(fetchProjects({}));
+    dispatch(fetchTasks({}));
+    dispatch(fetchIssues({}));
     dispatch(fetchNotifications({}));
     dispatch(fetchUnreadCount());
-  }, [dispatch, projects, tasks, issues, user]);
+  }, [dispatch, user]);
 
   const isLoading = projectsLoading || tasksLoading || issuesLoading;
 
@@ -57,7 +48,6 @@ export default function DashboardPage() {
       <p className="mt-1 text-sm text-gray-500">Welcome back, {user?.name || 'User'}!</p>
     
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Projects Card */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -85,7 +75,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Tasks Card */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -113,7 +102,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Issues Card */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -142,7 +130,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity */}
       <h2 className="mt-8 text-lg font-medium text-gray-900">Recent Activity</h2>
       <div className="mt-2 bg-white shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200">
