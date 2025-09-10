@@ -28,6 +28,11 @@ interface PaginationParams {
   search?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
+  [key: string]: string | number | undefined;
+}
+
+interface ServiceParams {
+  [key: string]: string
 }
 
 interface ApiResponse {
@@ -50,11 +55,16 @@ export const fetchProjects = createAsyncThunk<{ data: Project[]; totalCount: num
   'projects/fetchProjects',
   async (params: PaginationParams = {}, { rejectWithValue }) => {
     try {
-      const response = await projectService.getAllProjects() as ApiResponse;
+      const serviceParams: ServiceParams = Object.fromEntries(
+        Object.entries(params)
+          .filter(([_, value]) => value !== undefined)
+          .map(([key, value]) => [key, String(value)])
+      ) as ServiceParams
+      const response = await projectService.getAllProjects(serviceParams) as ApiResponse;
       
-      if (response?.data && Array.isArray(response.data)) {
+      if (response && typeof response === 'object' && 'data' in response && 'total' in response) {
         return {
-          data: response.data,
+          data: Array.isArray(response.data) ? response.data : [],
           totalCount: response.total || 0
         };
       }
