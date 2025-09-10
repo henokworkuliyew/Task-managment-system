@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { fetchIssues } from '../../redux/slices/issueSlice';
 import { fetchProjects } from '../../redux/slices/projectSlice';
-import { IssueCard, IssueForm } from '../../components/issues';
-import { Button, Card, Modal } from '../../components/common';
+import { IssueCard } from '../../components/issues';
+import { Button, Card } from '../../components/common';
+import { IssueDialog } from '../../components/dialogs';
 import { FiPlus, FiFilter } from 'react-icons/fi';
 import { Issue, Project } from '@/types';
 import { useRouter } from 'next/navigation';
@@ -15,21 +16,16 @@ export default function IssuesPage() {
   const router = useRouter();
   const { issues, isLoading } = useAppSelector((state) => state.issues);
   const { projects } = useAppSelector((state) => state.projects);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterPriority, setFilterPriority] = useState<string>('');
   const [filterProject, setFilterProject] = useState<string>('');
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
   
   useEffect(() => {
-    // Smart fetching: only fetch if we don't have data already (like social media apps)
-    if (!Array.isArray(issues) || issues.length === 0) {
-      dispatch(fetchIssues({}));
-    }
-    if (!Array.isArray(projects) || projects.length === 0) {
-      dispatch(fetchProjects({}));
-    }
-  }, [dispatch, issues, projects]);
+    dispatch(fetchIssues({}));
+    dispatch(fetchProjects({}));
+  }, [dispatch]);
 
   const filteredIssues = Array.isArray(issues) ? issues.filter((issue: Issue) => {
     if (filterStatus && issue.status !== filterStatus) return false;
@@ -38,21 +34,6 @@ export default function IssuesPage() {
     return true;
   }) : [];
 
-  const handleCreateSuccess = () => {
-    setIsCreateModalOpen(false);
-    setEditingIssue(null);
-    dispatch(fetchIssues({}));
-  };
-
-  const handleEditIssue = (issue: Issue) => {
-    setEditingIssue(issue);
-    setIsCreateModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsCreateModalOpen(false);
-    setEditingIssue(null);
-  };
 
   return (
     <>
@@ -66,7 +47,7 @@ export default function IssuesPage() {
             <Button
               variant="outline"
               icon={FiPlus}
-              onClick={() => router.push('/issues/new')}
+              onClick={() => setIsCreateDialogOpen(true)}
               className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/50"
             >
               New Issue
@@ -141,7 +122,7 @@ export default function IssuesPage() {
                 ? 'No issues match your current filters.'
                 : 'Get started by creating your first issue.'}
             </p>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
               Create Issue
             </Button>
           </Card>
@@ -149,25 +130,24 @@ export default function IssuesPage() {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredIssues.map((issue: Issue) => (
-                <IssueCard key={issue.id} issue={issue} onEdit={handleEditIssue} />
+                <IssueCard key={issue.id} issue={issue} onEdit={(issue: Issue) => setEditingIssue(issue)} />
               ))}
             </div>
           </div>
         )}
       </div>
 
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={handleCloseModal}
-        title={editingIssue ? 'Edit Issue' : 'Create New Issue'}
-        size="lg"
-      >
-        <IssueForm 
-          issue={editingIssue} 
-          onSuccess={handleCreateSuccess} 
-          onCancel={handleCloseModal} 
-        />
-      </Modal>
+      <IssueDialog
+        isOpen={isCreateDialogOpen || !!editingIssue}
+        onClose={() => {
+          setIsCreateDialogOpen(false);
+          setEditingIssue(null);
+        }}
+        issue={editingIssue}
+        onSuccess={() => {
+          dispatch(fetchIssues({}));
+        }}
+      />
     </>
   );
 }

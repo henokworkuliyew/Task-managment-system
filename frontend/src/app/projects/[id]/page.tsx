@@ -1,13 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '@/redux/store';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { fetchProjectById, updateProject, deleteProject } from '@/redux/slices/projectSlice';
+import { fetchTasksByProject } from '@/redux/slices/taskSlice';
+import { useSocket } from '@/hooks/useSocket';
+import { Task, Project, User } from '@/types';
+import { FiTrash2 } from 'react-icons/fi';
+import TaskCard from '@/components/tasks/TaskCard';
+import MemberCard from '@/components/projects/MemberCard';
+import TaskForm from '@/components/tasks/TaskForm';
+import ProjectForm from '@/components/projects/ProjectForm';
 import Link from 'next/link';
-import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
-import { fetchProjectById } from '../../../redux/slices/projectSlice';
-import { fetchTasksByProject } from '../../../redux/slices/taskSlice';
-import { TaskCard, TaskForm } from '../../../components/tasks';
-import { ProjectForm } from '../../../components/projects';
 import { Button, Card, Modal } from '../../../components/common';
 import { 
   FiPlus, 
@@ -20,8 +27,33 @@ import {
   FiTarget,
   FiActivity,
   FiCheckCircle,
+  FiStar,
+  FiGitBranch,
+  FiMessageCircle,
+  FiFileText,
+  FiTrendingUp,
+  FiAlertCircle,
+  FiSettings,
+  FiShare2,
+  FiDownload,
+  FiFilter,
+  FiSearch,
+  FiMoreVertical,
+  FiEye,
+  FiHeart,
+  FiBookmark,
+  FiFlag,
+  FiPieChart,
+  FiGrid,
+  FiList,
+  FiCalendar as FiCalendarView,
+  FiFolder,
+  FiUpload,
+  FiLink,
+  FiMail,
+  FiBell,
+  FiArchive
 } from 'react-icons/fi';
-import { Task } from '@/types';
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -31,6 +63,32 @@ export default function ProjectDetailPage() {
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: ''
+  })
+  const [onlineMembers, setOnlineMembers] = useState<Set<string>>(new Set())
+
+  const { isConnected } = useSocket({
+    projectId: id as string,
+    onUserJoined: (data) => {
+      setOnlineMembers(prev => new Set([...prev, data.userId]))
+    },
+    onUserLeft: (data) => {
+      setOnlineMembers(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(data.userId)
+        return newSet
+      })
+    },
+  })
+
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showMoreActions, setShowMoreActions] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -104,86 +162,153 @@ export default function ProjectDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+        {/* Enhanced Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/projects">
-                <Button variant="outline" size="sm">
-                  <FiArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Projects
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
-                <p className="mt-2 text-gray-600">{project.description}</p>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            {/* Header Background */}
+            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-8 py-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <Link href="/projects">
+                    <button className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-200 backdrop-blur-sm">
+                      <FiArrowLeft className="h-5 w-5 text-white" />
+                    </button>
+                  </Link>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                      <span className="text-2xl font-bold text-white">{project.name?.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <h1 className="text-3xl font-bold text-white mb-1">{project.name}</h1>
+                      <p className="text-blue-100 text-lg">{project.description}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setIsLiked(!isLiked)}
+                    className={`p-3 rounded-xl transition-all duration-200 ${isLiked ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                  >
+                    <FiHeart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+                  </button>
+                  <button
+                    onClick={() => setIsBookmarked(!isBookmarked)}
+                    className={`p-3 rounded-xl transition-all duration-200 ${isBookmarked ? 'bg-amber-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                  >
+                    <FiBookmark className={`h-5 w-5 ${isBookmarked ? 'fill-current' : ''}`} />
+                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowMoreActions(!showMoreActions)}
+                      className="p-3 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-200"
+                    >
+                      <FiMoreVertical className="h-5 w-5 text-white" />
+                    </button>
+                    {showMoreActions && (
+                      <div className="absolute right-0 top-14 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-20 min-w-[200px]">
+                        <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+                          <FiShare2 className="w-4 h-4 mr-3" />Share Project
+                        </button>
+                        <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+                          <FiDownload className="w-4 h-4 mr-3" />Export Data
+                        </button>
+                        <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+                          <FiArchive className="w-4 h-4 mr-3" />Archive Project
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
-                {project.status}
-              </span>
-              <Button
-                variant="outline"
-                onClick={() => setIsEditProjectModalOpen(true)}
-              >
-                <FiEdit className="mr-2 h-4 w-4" />
-                Edit Project
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => setIsCreateTaskModalOpen(true)}
-              >
-                <FiPlus className="mr-2 h-4 w-4" />
-                Add Task
-              </Button>
+            
+            {/* Status Bar */}
+            <div className="px-8 py-4 bg-white border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-6">
+                  <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold ${getStatusColor(project.status)}`}>
+                    {project.status === 'completed' && <FiCheckCircle className="w-4 h-4" />}
+                    {project.status === 'in_progress' && <FiActivity className="w-4 h-4" />}
+                    {project.status === 'on_hold' && <FiAlertCircle className="w-4 h-4" />}
+                    {project.status.replace('_', ' ').toUpperCase()}
+                  </div>
+                  <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border ${getPriorityColor(project.priority)} bg-opacity-10`}>
+                    <FiFlag className="w-4 h-4" />
+                    {project.priority.toUpperCase()} PRIORITY
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <FiEye className="w-4 h-4" />
+                    <span>{Math.floor(Math.random() * 500) + 100} views</span>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Button variant="outline" onClick={() => setIsEditProjectModalOpen(true)}>
+                    <FiEdit className="mr-2 h-4 w-4" />Edit
+                  </Button>
+                  <Button variant="primary" onClick={() => setIsCreateTaskModalOpen(true)}>
+                    <FiPlus className="mr-2 h-4 w-4" />Add Task
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Project Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Total Tasks</p>
-                <p className="text-2xl font-bold text-gray-900">{totalTasks}</p>
+        {/* Enhanced Stats Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-700">Total Tasks</p>
+                <p className="text-3xl font-bold text-blue-900">{totalTasks}</p>
+                <p className="text-xs text-blue-600 mt-1">+{Math.floor(Math.random() * 5) + 1} this week</p>
               </div>
-              <FiTarget className="h-8 w-8 text-blue-500" />
+              <div className="p-3 bg-blue-500 rounded-xl">
+                <FiTarget className="h-6 w-6 text-white" />
+              </div>
             </div>
           </Card>
           
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-green-600">{completedTasks}</p>
+          <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-700">Completed</p>
+                <p className="text-3xl font-bold text-green-900">{completedTasks}</p>
+                <p className="text-xs text-green-600 mt-1">{Math.round(progressPercentage)}% done</p>
               </div>
-              <FiCheckCircle className="h-8 w-8 text-green-500" />
+              <div className="p-3 bg-green-500 rounded-xl">
+                <FiCheckCircle className="h-6 w-6 text-white" />
+              </div>
             </div>
           </Card>
           
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">In Progress</p>
-                <p className="text-2xl font-bold text-yellow-600">
+          <Card className="p-6 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-amber-700">In Progress</p>
+                <p className="text-3xl font-bold text-amber-900">
                   {tasks.filter((task: Task) => task.status === 'in_progress').length}
                 </p>
+                <p className="text-xs text-amber-600 mt-1">Active work</p>
               </div>
-              <FiActivity className="h-8 w-8 text-yellow-500" />
+              <div className="p-3 bg-amber-500 rounded-xl">
+                <FiActivity className="h-6 w-6 text-white" />
+              </div>
             </div>
           </Card>
           
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Team Members</p>
-                <p className="text-2xl font-bold text-purple-600">{project.members?.length || 0}</p>
+          <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-700">Team Size</p>
+                <p className="text-3xl font-bold text-purple-900">{project.members?.length || 0}</p>
+                <p className="text-xs text-purple-600 mt-1">Active members</p>
               </div>
-              <FiUsers className="h-8 w-8 text-purple-500" />
+              <div className="p-3 bg-purple-500 rounded-xl">
+                <FiUsers className="h-6 w-6 text-white" />
+              </div>
             </div>
           </Card>
         </div>
@@ -254,21 +379,12 @@ export default function ProjectDetailPage() {
               <div className="space-y-3">
                 {project.members && project.members.length > 0 ? (
                   project.members.map((member) => (
-                    <div key={member.id} className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-medium">
-                            {member.name?.charAt(0).toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {member.name || member.email}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate">{member.email}</p>
-                      </div>
-                    </div>
+                    <MemberCard 
+                      key={member.id} 
+                      member={member} 
+                      projectId={project.id}
+                      isOnline={onlineMembers.has(member.id)}
+                    />
                   ))
                 ) : (
                   <p className="text-gray-500 text-sm">No team members yet</p>

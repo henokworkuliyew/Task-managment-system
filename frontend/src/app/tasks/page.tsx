@@ -7,7 +7,8 @@ import { fetchTasks } from '../../redux/slices/taskSlice';
 import { fetchProjects } from '../../redux/slices/projectSlice';
 import { TaskCard } from '../../components/tasks';
 import { Button, Card } from '../../components/common';
-import { FiPlus, FiFilter } from 'react-icons/fi';
+import { TaskDialog } from '../../components/dialogs';
+import { FiPlus, FiFilter, FiSearch } from 'react-icons/fi';
 import { Project, Task } from '@/types';
 
 export default function TasksPage() {
@@ -17,22 +18,24 @@ export default function TasksPage() {
   const { projects } = useAppSelector((state) => state.projects);
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterProject, setFilterProject] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
-    // Smart fetching: only fetch if we don't have data already (like social media apps)
-    if (!Array.isArray(tasks) || tasks.length === 0) {
-      dispatch(fetchTasks({}));
-    }
-    if (!Array.isArray(projects) || projects.length === 0) {
-      dispatch(fetchProjects({}));
-    }
-  }, [dispatch, tasks, projects]);
+    const params = {
+      page: currentPage,
+      limit: 10,
+      ...(filterStatus && { status: filterStatus }),
+      ...(filterProject && { projectId: filterProject }),
+      ...(searchQuery && { search: searchQuery })
+    };
+    dispatch(fetchTasks(params));
+    dispatch(fetchProjects({}));
+  }, [dispatch, currentPage, filterStatus, filterProject, searchQuery]);
 
-  const filteredTasks = Array.isArray(tasks) ? tasks.filter((task: Task) => {
-    if (filterStatus && task.status !== filterStatus) return false;
-    if (filterProject && task.project?.id !== filterProject) return false;
-    return true;
-  }) : [];
+  const displayTasks = Array.isArray(tasks) ? tasks : [];
 
   const handleEditTask = (task: Task) => {
     router.push(`/tasks/edit/${task.id}`);
@@ -43,6 +46,16 @@ export default function TasksPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Tasks</h1>
           <div className="flex space-x-3">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search tasks..."
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-64"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <FiSearch className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            </div>
             <div className="relative">
               <select
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -75,10 +88,7 @@ export default function TasksPage() {
             <Button
               variant="primary"
               icon={FiPlus}
-              onClick={() => {
-                console.log('New Task button clicked - navigating to /tasks/new');
-                router.push('/tasks/new');
-              }}
+              onClick={() => setIsCreateDialogOpen(true)}
             >
               New Task
             </Button>
@@ -89,11 +99,11 @@ export default function TasksPage() {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
-        ) : filteredTasks.length === 0 ? (
+        ) : displayTasks.length === 0 ? (
           <Card className="text-center py-12">
             <h3 className="text-lg font-medium text-gray-900">No tasks found</h3>
             <p className="mt-2 text-sm text-gray-500">
-              {filterStatus || filterProject
+              {filterStatus || filterProject || searchQuery
                 ? 'No tasks match your current filters.'
                 : 'Get started by creating a new task.'}
             </p>
@@ -101,7 +111,7 @@ export default function TasksPage() {
               <Button
                 variant="primary"
                 icon={FiPlus}
-                onClick={() => router.push('/tasks/new')}
+                onClick={() => setIsCreateDialogOpen(true)}
               >
                 Create Task
               </Button>
@@ -109,11 +119,47 @@ export default function TasksPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTasks.map((task:Task) => (
-              <TaskCard key={task.id} task={task} onEdit={handleEditTask} />
+            {displayTasks.map((task:Task) => (
+              <TaskCard key={task.id} task={task} onEdit={(task: Task) => setEditingTask(task)} />
             ))}
           </div>
         )}
+
+        {displayTasks.length > 0 && (
+          <div className="mt-8 flex justify-center">
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="px-4 py-2 text-sm text-gray-700">
+                Page {currentPage}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={displayTasks.length < 10}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        <TaskDialog
+          isOpen={isCreateDialogOpen || !!editingTask}
+          onClose={() => {
+            setIsCreateDialogOpen(false);
+            setEditingTask(null);
+          }}
+          task={editingTask}
+          onSuccess={() => {
+            dispatch(fetchTasks({}));
+          }}
+        />
       </div>
   );
 }

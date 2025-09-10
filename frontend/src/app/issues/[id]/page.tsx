@@ -264,7 +264,7 @@ export default function IssueDetailPage() {
               </div>
 
               {/* Resolution Status */}
-              {issue.status === 'resolved' && (
+              {issue.status === 'closed' && (
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
                   <div className="flex items-center justify-center text-green-600">
                     <FiCheckCircle className="mr-3 h-8 w-8" />
