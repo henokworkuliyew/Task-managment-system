@@ -124,7 +124,7 @@ export interface TaskState {
 }
 
 // Issue Types
-export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+export type IssueStatus = 'open' | 'in_progress' | 'closed';
 export type IssuePriority = 'critical' | 'high' | 'medium' | 'low';
 export type IssueType = 'bug' | 'feature' | 'improvement' | 'task';
 
@@ -180,10 +180,50 @@ export interface NotificationState {
   error: string | null;
 }
 
+// Message Types
+export interface Message {
+  id: string
+  content: string
+  type: 'text' | 'file' | 'image'
+  attachments: string[]
+  isEdited: boolean
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  sender: {
+    id: string
+    name: string
+    email: string
+    profilePicture?: string
+  }
+  senderId: string
+  projectId: string
+}
+
+export interface CreateMessageData {
+  content: string
+  type?: 'text' | 'file' | 'image'
+  attachments?: string[]
+  projectId: string
+}
+
+export interface UpdateMessageData {
+  content?: string
+  attachments?: string[]
+}
+
+export interface MessageState {
+  messages: Message[]
+  isLoading: boolean
+  error: string | null
+  totalCount: number
+}
+
 export interface RootState {
   auth: AuthState;
   projects: ProjectState;
   tasks: TaskState;
   issues: IssueState;
   notifications: NotificationState;
+  messages: MessageState;
 }
