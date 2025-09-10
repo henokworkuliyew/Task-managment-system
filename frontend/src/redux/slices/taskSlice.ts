@@ -35,6 +35,15 @@ interface TaskQueryParams {
   parentTaskId?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
+  [key: string]: string | number | undefined;
+}
+
+interface TaskApiResponse {
+  data: Task[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 const initialState: TaskState = {
@@ -46,23 +55,18 @@ const initialState: TaskState = {
 };
 
 // Async thunks
-export const fetchTasks = createAsyncThunk<{ data: Task[]; totalCount: number }, TaskQueryParams>(
+export const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
-  async (params: TaskQueryParams = {}, { rejectWithValue }) => {
-    try {
-      const tasks = await taskService.getAllTasks();
-      return {
-        data: tasks,
-        totalCount: tasks.length
-      };
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch tasks';
-      return rejectWithValue(errorMessage);
-    }
+  async (params: TaskQueryParams = {}) => {
+    const serviceParams: Record<string, string | number> = Object.fromEntries(
+      Object.entries(params).filter(([_, value]) => value !== undefined)
+    ) as Record<string, string | number>
+    const response = await taskService.getAllTasks(serviceParams);
+    return response;
   }
 );
 
-export const fetchTaskById = createAsyncThunk(
+export const fetchTaskById = createAsyncThunk<Task, string>(
   'tasks/fetchTaskById',
   async (id: string, { rejectWithValue }) => {
     try {
@@ -75,7 +79,7 @@ export const fetchTaskById = createAsyncThunk(
   }
 );
 
-export const createTask = createAsyncThunk(
+export const createTask = createAsyncThunk<Task, CreateTaskData>(
   'tasks/createTask',
   async (data: CreateTaskData, { rejectWithValue }) => {
     try {
@@ -96,7 +100,7 @@ export const createTask = createAsyncThunk(
   }
 );
 
-export const updateTask = createAsyncThunk(
+export const updateTask = createAsyncThunk<Task, { id: string; data: UpdateTaskData }>(
   'tasks/updateTask',
   async ({ id, data }: { id: string; data: UpdateTaskData }, { rejectWithValue }) => {
     try {
@@ -119,7 +123,7 @@ export const updateTask = createAsyncThunk(
   }
 );
 
-export const deleteTask = createAsyncThunk(
+export const deleteTask = createAsyncThunk<string, string>(
   'tasks/deleteTask',
   async (id: string, { rejectWithValue }) => {
     try {
@@ -132,7 +136,7 @@ export const deleteTask = createAsyncThunk(
   }
 );
 
-export const fetchTasksByProject = createAsyncThunk(
+export const fetchTasksByProject = createAsyncThunk<Task[], string>(
   'tasks/fetchTasksByProject',
   async (projectId: string, { rejectWithValue }) => {
     try {
@@ -162,15 +166,11 @@ const taskSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     });
-    builder.addCase(fetchTasks.fulfilled, (state, action: PayloadAction<{ data: Task[]; totalCount: number }>) => {
+    builder.addCase(fetchTasks.fulfilled, (state, action) => {
       state.isLoading = false;
-      // Only update if we actually received data
-      if (action.payload.data && Array.isArray(action.payload.data)) {
-        state.tasks = action.payload.data;
-        state.totalCount = action.payload.totalCount;
-        // Persist to localStorage
-        setStoredState(STORAGE_KEYS.TASKS, action.payload.data);
-      }
+      state.tasks = action.payload.data;
+      state.totalCount = action.payload.total;
+      setStoredState(STORAGE_KEYS.TASKS, action.payload.data);
     });
     builder.addCase(fetchTasks.rejected, (state, action) => {
       state.isLoading = false;
@@ -205,24 +205,13 @@ const taskSlice = createSlice({
       state.error = action.payload as string;
     });
 
-    // Create, Update, Delete Task cases follow the same pattern
     builder.addCase(createTask.pending, (state) => { state.isLoading = true; state.error = null; });
     builder.addCase(createTask.fulfilled, (state, action: PayloadAction<Task>) => {
       state.isLoading = false;
-      // Ensure state.tasks is an array before adding new task
-      if (Array.isArray(state.tasks)) {
-        // Check if task already exists to avoid duplicates
-        const existingTask = state.tasks.find(t => t.id === action.payload.id);
-        if (!existingTask) {
-          state.tasks.push(action.payload);
-          state.totalCount += 1;
-          // Persist to localStorage
-          setStoredState(STORAGE_KEYS.TASKS, state.tasks);
-        }
-      } else {
-        state.tasks = [action.payload];
-        state.totalCount = 1;
-        // Persist to localStorage
+      const existingTask = state.tasks.find(t => t.id === action.payload.id);
+      if (!existingTask) {
+        state.tasks.push(action.payload);
+        state.totalCount += 1;
         setStoredState(STORAGE_KEYS.TASKS, state.tasks);
       }
     });
