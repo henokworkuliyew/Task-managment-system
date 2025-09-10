@@ -33,12 +33,10 @@ const getStoredToken = (key: string): string | null => {
 const storeToken = (key: string, token: string | null | undefined): void => {
   if (typeof window === 'undefined') return;
   
-  console.log(`storeToken(${key}):`, token ? `STORING_TOKEN_LENGTH_${token.length}` : 'REMOVING_TOKEN');
   if (!token || token === 'undefined' || token === 'null' || token.trim() === '') {
     localStorage.removeItem(key);
   } else {
     localStorage.setItem(key, token.trim());
-    console.log(`Token stored in localStorage for ${key}`);
   }
 };
 
@@ -101,29 +99,9 @@ export const login = createAsyncThunk<{ user: User; accessToken: string; refresh
   async (data: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await authService.login(data);
-      console.log('Login API response received - RAW:', response);
-      console.log('Login API response received - ANALYSIS:', {
-        hasUser: !!response.user,
-        hasAccessToken: !!response.accessToken,
-        hasRefreshToken: !!response.refreshToken,
-        accessTokenLength: response.accessToken?.length,
-        refreshTokenLength: response.refreshToken?.length,
-        responseKeys: Object.keys(response || {}),
-        accessTokenValue: response.accessToken,
-        refreshTokenValue: response.refreshToken
-      });
       
-      console.log('Storing tokens in localStorage...');
       storeToken('accessToken', response.accessToken);
       storeToken('refreshToken', response.refreshToken);
-      
-      // Verify tokens were stored
-      const storedAccess = localStorage.getItem('accessToken');
-      const storedRefresh = localStorage.getItem('refreshToken');
-      console.log('Verification after storage:', {
-        storedAccessToken: storedAccess ? `LENGTH_${storedAccess.length}` : 'NULL',
-        storedRefreshToken: storedRefresh ? `LENGTH_${storedRefresh.length}` : 'NULL'
-      });
       
       return response;
     } catch (error: unknown) {

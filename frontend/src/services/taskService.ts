@@ -16,43 +16,43 @@ export interface UpdateTaskData extends Partial<CreateTaskData> {
 }
 
 const taskService = {
-  
-  getAllTasks: async () => {
-    const response = await api.get<{success: boolean, data: Task[], timestamp: string}>('/tasks');
+  getAllTasks: async (params: Record<string, string | number> = {}): Promise<{
+    data: Task[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> => {
+    const queryString = new URLSearchParams(params as Record<string, string>).toString();
+    const response = await api.get<{success: boolean, data: {data: Task[], total: number, page: number, limit: number, totalPages: number}, timestamp: string}>(`/tasks${queryString ? `?${queryString}` : ''}`);
     return response.data.data;
   },
 
-  
   getTaskById: async (id: string) => {
     const response = await api.get<{success: boolean, data: Task, timestamp: string}>(`/tasks/${id}`);
     return response.data.data;
   },
 
-  
   createTask: async (taskData: CreateTaskData) => {
     const response = await api.post<{success: boolean, data: Task, timestamp: string}>('/tasks', taskData);
     return response.data.data;
   },
 
-  
   updateTask: async ({ id, ...taskData }: UpdateTaskData) => {
-    const response = await api.put<{success: boolean, data: Task, timestamp: string}>(`/tasks/${id}`, taskData);
+    const response = await api.patch<{success: boolean, data: Task, timestamp: string}>(`/tasks/${id}`, taskData);
     return response.data.data;
   },
 
-  
   deleteTask: async (id: string) => {
     const response = await api.delete(`/tasks/${id}`);
     return response.data;
   },
 
-  
   getTasksByProject: async (projectId: string) => {
     const response = await api.get<{success: boolean, data: Task[], timestamp: string}>(`/tasks/project/${projectId}`);
     return response.data.data;
   },
 
-  
   getTasksByUser: async (userId: string) => {
     const response = await api.get<{success: boolean, data: Task[], timestamp: string}>(`/tasks/user/${userId}`);
     return response.data.data;
@@ -63,7 +63,6 @@ const taskService = {
     return response.data;
   },
 
-  
   assignTaskToUser: async (taskId: string, userId: string) => {
     const response = await api.patch(`/tasks/${taskId}/assign`, { userId });
     return response.data;

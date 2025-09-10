@@ -21,7 +21,7 @@ interface UpdateIssueData {
   severity?: 'minor' | 'major' | 'critical';
   status?: 'open' | 'in_progress' | 'resolved' | 'closed';
   assignedTo?: string;
-  id: string;
+  projectId?: string;
 }
 
 interface IssueQueryParams {
@@ -38,6 +38,14 @@ interface IssueQueryParams {
   sortOrder?: 'ASC' | 'DESC';
 }
 
+interface IssueApiResponse {
+  data: Issue[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 const initialState: IssueState = {
   issues: getStoredState(STORAGE_KEYS.ISSUES) || [],
   currentIssue: null,
@@ -50,10 +58,18 @@ export const fetchIssues = createAsyncThunk<{ data: Issue[]; totalCount: number 
   'issues/fetchIssues',
   async (params: IssueQueryParams = {}, { rejectWithValue }) => {
     try {
-      const issues = await issueService.getAllIssues();
+      const response = await issueService.getAllIssues() as IssueApiResponse;
+      
+      if (response?.data && Array.isArray(response.data)) {
+        return {
+          data: response.data,
+          totalCount: response.total || 0
+        };
+      }
+      
       return {
-        data: issues,
-        totalCount: issues.length
+        data: [],
+        totalCount: 0
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch issues';
@@ -62,7 +78,7 @@ export const fetchIssues = createAsyncThunk<{ data: Issue[]; totalCount: number 
   }
 );
 
-export const fetchIssueById = createAsyncThunk(
+export const fetchIssueById = createAsyncThunk<Issue, string>(
   'issues/fetchIssueById',
   async (id: string, { rejectWithValue }) => {
     try {
@@ -75,7 +91,7 @@ export const fetchIssueById = createAsyncThunk(
   }
 );
 
-export const createIssue = createAsyncThunk(
+export const createIssue = createAsyncThunk<Issue, CreateIssueData>(
   'issues/createIssue',
   async (data: CreateIssueData, { rejectWithValue }) => {
     try {
@@ -88,7 +104,7 @@ export const createIssue = createAsyncThunk(
   }
 );
 
-export const updateIssue = createAsyncThunk(
+export const updateIssue = createAsyncThunk<Issue, { id: string; data: UpdateIssueData }>(
   'issues/updateIssue',
   async ({ id, data }: { id: string; data: UpdateIssueData }, { rejectWithValue }) => {
     try {
@@ -101,7 +117,7 @@ export const updateIssue = createAsyncThunk(
   }
 );
 
-export const deleteIssue = createAsyncThunk(
+export const deleteIssue = createAsyncThunk<string, string>(
   'issues/deleteIssue',
   async (id: string, { rejectWithValue }) => {
     try {
@@ -133,13 +149,9 @@ const issueSlice = createSlice({
     });
     builder.addCase(fetchIssues.fulfilled, (state, action: PayloadAction<{ data: Issue[]; totalCount: number }>) => {
       state.isLoading = false;
-      // Only update if we actually received data
-      if (action.payload.data && Array.isArray(action.payload.data)) {
-        state.issues = action.payload.data;
-        state.totalCount = action.payload.totalCount;
-        // Persist to localStorage
-        setStoredState(STORAGE_KEYS.ISSUES, action.payload.data);
-      }
+      state.issues = action.payload.data;
+      state.totalCount = action.payload.totalCount;
+      setStoredState(STORAGE_KEYS.ISSUES, action.payload.data);
     });
     builder.addCase(fetchIssues.rejected, (state, action) => {
       state.isLoading = false;
@@ -167,20 +179,10 @@ const issueSlice = createSlice({
     });
     builder.addCase(createIssue.fulfilled, (state, action: PayloadAction<Issue>) => {
       state.isLoading = false;
-      // Ensure state.issues is an array before adding new issue
-      if (Array.isArray(state.issues)) {
-        // Check if issue already exists to avoid duplicates
-        const existingIssue = state.issues.find(i => i.id === action.payload.id);
-        if (!existingIssue) {
-          state.issues.push(action.payload);
-          state.totalCount += 1;
-          // Persist to localStorage
-          setStoredState(STORAGE_KEYS.ISSUES, state.issues);
-        }
-      } else {
-        state.issues = [action.payload];
-        state.totalCount = 1;
-        // Persist to localStorage
+      const existingIssue = state.issues.find(i => i.id === action.payload.id);
+      if (!existingIssue) {
+        state.issues.push(action.payload);
+        state.totalCount += 1;
         setStoredState(STORAGE_KEYS.ISSUES, state.issues);
       }
     });

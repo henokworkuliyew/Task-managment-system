@@ -8,6 +8,7 @@ export interface UpdateUserData {
   avatar?: string;
 }
 
+
 export interface ChangePasswordData {
   currentPassword: string;
   newPassword: string;
@@ -48,6 +49,11 @@ const userService = {
   },
 
   getUsersByProject: async (projectId: string) => {
+    const response = await api.get<User[]>(`/users/project/${projectId}`);
+    return response.data;
+  },
+
+  getProjectMembers: async (projectId: string) => {
     const response = await api.get<User[]>(`/users/project/${projectId}`);
     return response.data;
   },

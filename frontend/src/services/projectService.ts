@@ -16,10 +16,9 @@ export interface UpdateProjectData extends Partial<CreateProjectData> {
 
 const projectService = {
   
-  getAllProjects: async () => {
-    const response = await api.get<{success: boolean, data: {data: Project[], total: number, page: number, limit: number, totalPages: number}, timestamp: string}>('/projects');
-    console.log('Raw API response:', response.data);
-    // Return the complete paginated response structure from backend
+  getAllProjects: async (params: Record<string, string> = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const response = await api.get<{success: boolean, data: {data: Project[], total: number, page: number, limit: number, totalPages: number}, timestamp: string}>(`/projects${queryString ? `?${queryString}` : ''}`);
     return response.data.data;
   },
 
@@ -54,6 +53,12 @@ const projectService = {
   },
 
   
+  getProjectMembers: async (projectId: string, params: Record<string, string | number> = {}): Promise<{ data: { id: string, userId: string, projectId: string, role: string }[], success: boolean, timestamp: string }> => {
+    const queryString = new URLSearchParams(params as Record<string, string>).toString();
+    const response = await api.get<{ data: { id: string, userId: string, projectId: string, role: string }[], success: boolean, timestamp: string }>(`/projects/${projectId}/users${queryString ? `?${queryString}` : ''}`);
+    return response.data;
+  },
+
   addUserToProject: async (projectId: string, userId: string, role: string) => {
     const response = await api.post(`/projects/${projectId}/users`, { userId, role });
     return response.data;

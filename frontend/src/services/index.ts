@@ -3,8 +3,9 @@ import authService from './authService';
 import projectService from './projectService';
 import taskService from './taskService';
 import issueService from './issueService';
-import notificationService from './notificationService';
+import { default as notificationService } from './notificationService';
 import userService from './userService';
+import messageService from './messageService';
 
 export {
   api,
@@ -13,5 +14,6 @@ export {
   taskService,
   issueService,
   notificationService,
+  messageService,
   userService,
 };

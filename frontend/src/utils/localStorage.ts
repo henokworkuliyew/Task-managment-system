@@ -5,7 +5,6 @@ export const getStoredState = (key: string) => {
   try {
     const item = localStorage.getItem(key);
     const parsed = item ? JSON.parse(item) : null;
-    console.log(`Reading from localStorage key "${key}":`, parsed);
     return parsed;
   } catch (error) {
     console.error(`Error reading from localStorage key "${key}":`, error);
@@ -17,7 +16,6 @@ export const setStoredState = (key: string, value: unknown) => {
   if (typeof window === 'undefined') return;
   
   try {
-    console.log(`Writing to localStorage key "${key}":`, value);
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
     console.error(`Error writing to localStorage key "${key}":`, error);
