@@ -7,21 +7,20 @@ interface CreateIssueData {
   title: string;
   description: string;
   projectId: string;
-  taskId?: string;
-  assignedTo?: string;
-  priority: 'low' | 'medium' | 'high';
-  severity: 'minor' | 'major' | 'critical';
+  assigneeId?: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  attachments?: string[];
 }
 
 interface UpdateIssueData {
   title?: string;
   description?: string;
-  priority?: 'low' | 'medium' | 'high';
-  severity?: 'minor' | 'major' | 'critical';
+  assigneeId?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
   status?: 'open' | 'in_progress' | 'resolved' | 'closed';
-  assignedTo?: string;
   projectId?: string;
+  attachments?: string[];
 }
 
 interface IssueQueryParams {
@@ -108,7 +107,7 @@ export const updateIssue = createAsyncThunk<Issue, { id: string; data: UpdateIss
   'issues/updateIssue',
   async ({ id, data }: { id: string; data: UpdateIssueData }, { rejectWithValue }) => {
     try {
-      const issue = await issueService.updateIssue({ ...data, id });
+      const issue = await issueService.updateIssue({ id, ...data });
       return issue;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update issue';

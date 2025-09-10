@@ -63,9 +63,9 @@ const IssueDialog = ({ isOpen, onClose, issue, projectId, onSuccess }: IssueDial
           title: values.title,
           description: values.description,
           projectId: values.projectId,
-          severity: values.severity as 'minor' | 'major' | 'critical',
+          severity: values.severity as 'low' | 'medium' | 'high' | 'critical',
           status: values.status,
-          priority: 'medium' as 'low' | 'medium' | 'high',
+          attachments: [],
         };
 
         if (isEditing && issue) {

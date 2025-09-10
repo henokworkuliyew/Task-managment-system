@@ -27,10 +27,10 @@ export class TasksService {
     // First verify the creator has access to the project
     const project = await this.validateProjectAccess(createTaskDto.projectId, creatorId)
     
-    // Only project owner can assign tasks to others
-    if (createTaskDto.assigneeId && createTaskDto.assigneeId !== creatorId) {
+    // Only project owner can assign tasks
+    if (createTaskDto.assigneeId) {
       if (project.owner.id !== creatorId) {
-        throw new ForbiddenException('Only project owners can assign tasks to other members')
+        throw new ForbiddenException('Only project owners can assign tasks')
       }
       // Validate the assignee is a project member
       await this.validateAssigneeAccess(createTaskDto.assigneeId, project)
@@ -134,10 +134,10 @@ export class TasksService {
     const task = await this.findOne(id, userId)
     const oldAssigneeId = task.assignee?.id
 
-    // Only project owner can assign tasks to others
-    if (updateTaskDto.assigneeId && updateTaskDto.assigneeId !== userId && updateTaskDto.assigneeId !== oldAssigneeId) {
+    // Only project owner can assign tasks
+    if (updateTaskDto.assigneeId && updateTaskDto.assigneeId !== oldAssigneeId) {
       if (task.project.owner.id !== userId) {
-        throw new ForbiddenException('Only project owners can assign tasks to other members')
+        throw new ForbiddenException('Only project owners can assign tasks')
       }
       // Validate the assignee is a project member
       await this.validateAssigneeAccess(updateTaskDto.assigneeId, task.project)

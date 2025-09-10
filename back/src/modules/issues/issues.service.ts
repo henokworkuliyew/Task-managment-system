@@ -29,7 +29,11 @@ export class IssuesService {
   ): Promise<Issue> {
     const project = await this.validateProjectAccess(createIssueDto.projectId, reporterId)
     
+    // Only project owner can assign issues
     if (createIssueDto.assigneeId) {
+      if (project.owner.id !== reporterId) {
+        throw new ForbiddenException('Only project owners can assign issues')
+      }
       await this.validateAssigneeAccess(createIssueDto.assigneeId, project)
     }
 
@@ -121,6 +125,14 @@ export class IssuesService {
   ): Promise<Issue> {
     const issue = await this.findOne(id, userId)
     const oldAssigneeId = issue.assignee?.id
+
+    // Only project owner can assign issues
+    if (updateIssueDto.assigneeId && updateIssueDto.assigneeId !== oldAssigneeId) {
+      if (issue.project.owner.id !== userId) {
+        throw new ForbiddenException('Only project owners can assign issues')
+      }
+      await this.validateAssigneeAccess(updateIssueDto.assigneeId, issue.project)
+    }
 
     if (updateIssueDto.attachments) {
       issue.attachments = updateIssueDto.attachments

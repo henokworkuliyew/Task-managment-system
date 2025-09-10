@@ -5,11 +5,10 @@ export interface CreateIssueData {
   title: string;
   description: string;
   projectId: string;
-  taskId?: string;
-  assignedTo?: string;
-  priority: 'low' | 'medium' | 'high';
-  severity: 'minor' | 'major' | 'critical';
+  assigneeId?: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  attachments?: string[];
 }
 
 export interface UpdateIssueData extends Partial<CreateIssueData> {
