@@ -1,16 +1,35 @@
-import { Notification } from '@/types';
 import api from './api';
+import { Notification } from '@/types';
 
 const notificationService = {
  
-  getUserNotifications: async () => {
-    const response = await api.get<{success: boolean, data: Notification[], timestamp: string}>('/notifications');
-    return response.data.data;
+  getUserNotifications: async (): Promise<Notification[]> => {
+    const response = await api.get('/notifications');
+    const data = response.data;
+    
+    if (Array.isArray(data)) {
+      return data;
+    }
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+      return data.data;
+    }
+    if (data && typeof data === 'object' && 'data' in data && data.data && typeof data.data === 'object' && 'data' in data.data && Array.isArray(data.data.data)) {
+      return data.data.data;
+    }
+    
+    return [];
   },
 
   getUnreadCount: async () => {
     const response = await api.get<{success: boolean, data: { count: number }, timestamp: string}>('/notifications/unread/count');
-    return response.data.data;
+    const data = response.data;
+    if (typeof data === 'number') {
+      return { count: data };
+    }
+    if (data && data.data && typeof data.data.count === 'number') {
+      return data.data;
+    }
+    return { count: 0 };
   },
 
   markAsRead: async (notificationId: string) => {
