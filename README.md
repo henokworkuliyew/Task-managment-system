@@ -223,7 +223,6 @@ npm run dev
 
 1. **Connect repository to Vercel**
 2. **Set environment variables**:
-   - `NEXT_PUBLIC_API_URL=https://your-backend-url.render.com`
 3. **Deploy**: Vercel will automatically build and deploy
 
 ### Environment Variables for Production
