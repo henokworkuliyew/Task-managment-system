@@ -44,7 +44,6 @@ export default function EditTaskPage() {
         }
       })).unwrap()
       
-      // Navigate back to task detail page
       router.push(`/tasks/${task.id}`)
     } catch (error) {
       console.error('Failed to update task:', error)
