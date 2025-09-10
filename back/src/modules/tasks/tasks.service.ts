@@ -39,6 +39,7 @@ export class TasksService {
     const task = this.taskRepository.create({
       ...createTaskDto,
       attachments: createTaskDto.attachments || [],
+      progress: this.calculateProgressFromStatus(createTaskDto.status || 'todo'),
       assignee: createTaskDto.assigneeId
         ? { id: createTaskDto.assigneeId }
         : null,
@@ -56,7 +57,7 @@ export class TasksService {
   }
 
   async findAll(query: any, userId: string) {
-    const { page = 1, limit = 10, status, projectId, assigneeId } = query
+    const { page = 1, limit = 10, status, projectId, assigneeId, search } = query
     const skip = (page - 1) * limit
 
     const queryBuilder = this.taskRepository
@@ -79,6 +80,13 @@ export class TasksService {
 
     if (assigneeId) {
       queryBuilder.andWhere('task.assigneeId = :assigneeId', { assigneeId })
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(LOWER(task.title) LIKE LOWER(:search) OR LOWER(task.description) LIKE LOWER(:search) OR LOWER(project.name) LIKE LOWER(:search))',
+        { search: `%${search}%` }
+      )
     }
 
     const [tasks, total] = await queryBuilder
@@ -140,6 +148,11 @@ export class TasksService {
     }
 
     Object.assign(task, updateTaskDto)
+    
+    if (updateTaskDto.status) {
+      task.progress = this.calculateProgressFromStatus(updateTaskDto.status)
+    }
+    
     const updatedTask = await this.taskRepository.save(task)
 
     // Send notifications for assignment changes
@@ -276,6 +289,23 @@ export class TasksService {
     
     if (!isProjectMember) {
       throw new ForbiddenException('Tasks can only be assigned to project members')
+    }
+  }
+
+  private calculateProgressFromStatus(status: string): number {
+    switch (status) {
+      case 'todo':
+        return 0
+      case 'in_progress':
+        return 50
+      case 'blocked':
+        return 25
+      case 'review':
+        return 80
+      case 'done':
+        return 100
+      default:
+        return 0
     }
   }
 }

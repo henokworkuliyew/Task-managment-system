@@ -151,8 +151,8 @@ export class ProjectsService {
     }
   }
 
-  async findAll(paginationDto: PaginationDto, userId: string) {
-    const { page = 1, limit = 10 } = paginationDto
+  async findAll(paginationDto: PaginationDto & { search?: string }, userId: string) {
+    const { page = 1, limit = 10, search } = paginationDto
     const skip = (page - 1) * limit
 
     console.log('ProjectsService.findAll - User ID:', userId)
@@ -161,18 +161,38 @@ export class ProjectsService {
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.owner', 'owner')
       .leftJoinAndSelect('project.members', 'members')
+      .leftJoinAndSelect('project.tasks', 'tasks')
       .where('project.ownerId = :userId OR members.id = :userId', { userId })
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(LOWER(project.name) LIKE LOWER(:search) OR LOWER(project.description) LIKE LOWER(:search))',
+        { search: `%${search}%` }
+      )
+    }
+
+    const [projects, total] = await queryBuilder
       .skip(skip)
       .take(limit)
       .orderBy('project.createdAt', 'DESC')
+      .getManyAndCount()
 
-    const [projects, total] = await queryBuilder.getManyAndCount()
+    const projectsWithProgress = projects.map(project => {
+      const completedTasks = project.tasks?.filter(task => task.status === 'done').length || 0
+      const totalTasks = project.tasks?.length || 0
+      const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+      
+      return {
+        ...project,
+        progress
+      }
+    })
 
-    console.log('ProjectsService.findAll - Found projects:', projects.length)
-    console.log('ProjectsService.findAll - Project IDs:', projects.map(p => p.id))
+    console.log('ProjectsService.findAll - Found projects:', projectsWithProgress.length)
+    console.log('ProjectsService.findAll - Project IDs:', projectsWithProgress.map(p => p.id))
 
     return {
-      data: projects,
+      data: projectsWithProgress,
       total,
       page,
       limit,
