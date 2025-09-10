@@ -67,6 +67,7 @@ export default function ProjectsPage() {
               variant="primary"
               icon={FiPlus}
               onClick={() => setIsCreateDialogOpen(true)}
+              className='bg-blue-600 hover:bg-blue-700 text-white'
             >
               New Project
             </Button>
@@ -85,7 +86,7 @@ export default function ProjectsPage() {
                 ? 'No projects match your current filters.'
                 : 'Get started by creating a new project.'}
             </p>
-            <div className="mt-6">
+            <div className="mt-6 text-gray-950">
               <Button
                 variant="primary"
                 icon={FiPlus}
