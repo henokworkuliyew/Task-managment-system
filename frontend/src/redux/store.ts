@@ -3,7 +3,9 @@ import authReducer from './slices/authSlice';
 import projectReducer from './slices/projectSlice';
 import taskReducer from './slices/taskSlice';
 import issueReducer from './slices/issueSlice';
-import notificationReducer from './slices/notificationSlice';
+import notificationReducer from './slices/notificationSlice'
+import messageReducer from './slices/messageSlice'
+import calendarReducer from './slices/calendarSlice';
 
 // Configure the store with reducers
 export const store = configureStore({
@@ -13,6 +15,8 @@ export const store = configureStore({
     tasks: taskReducer,
     issues: issueReducer,
     notifications: notificationReducer,
+    messages: messageReducer,
+    calendar: calendarReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
