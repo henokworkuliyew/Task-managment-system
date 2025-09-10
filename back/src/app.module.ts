@@ -15,7 +15,9 @@ import { TimeTrackingModule } from "./modules/time-tracking/time-tracking.module
 import { ReportsModule } from "./modules/reports/reports.module"
 import { WebhooksModule } from "./modules/webhooks/webhooks.module"
 import { InvitationsModule } from "./modules/invitations/invitations.module"
-
+import { CalendarModule } from './calendar/calendar.module'
+import { MessagesModule } from './modules/messages/messages.module'
+import { ChatModule } from './modules/chat/chat.module'
 
 import { databaseConfig } from "./config/database.config"
 import { cloudinaryConfig } from "./config/cloudinary.config"
@@ -78,6 +80,9 @@ import { cloudinaryConfig } from "./config/cloudinary.config"
     ReportsModule,
     WebhooksModule,
     InvitationsModule,
+    CalendarModule,
+    MessagesModule,
+    ChatModule,
   ],
   providers: [
     {
