@@ -1,73 +1,49 @@
-import Link from 'next/link';
+'use client';
+
 import { Project } from '../../types';
 import { 
-  FiUsers, 
-  FiCalendar, 
-  FiClock, 
-  FiTrendingUp, 
-  FiTarget,
-  FiArrowRight,
-  FiStar,
-  FiActivity
+  FiCalendar, FiUsers, FiMoreVertical, FiEdit2, FiTrash2, FiEye, FiMessageSquare, 
+  FiHeart, FiMessageCircle, FiShare2, FiBookmark, FiTrendingUp, FiActivity,
+  FiGitBranch, FiCheckCircle, FiAlertCircle, FiStar, FiClock, FiFlag, FiTarget
 } from 'react-icons/fi';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface ProjectCardProps {
   project: Project;
+  onEdit?: (project: Project) => void;
 }
 
-const ProjectCard = ({ project }: ProjectCardProps) => {
-  const { id, name, description, priority, progress, startDate, endDate, members, status } = project;
+const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
+  const router = useRouter();
+  const [showMenu, setShowMenu] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 50) + 5);
 
-  const getPriorityConfig = (priority: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return {
-          bg: 'bg-gradient-to-r from-red-500 to-pink-500',
-          text: 'text-white',
-          icon: '🔥',
-          glow: 'shadow-red-200'
-        };
+        return 'bg-red-50 text-red-700 border-red-200';
       case 'medium':
-        return {
-          bg: 'bg-gradient-to-r from-yellow-400 to-orange-500',
-          text: 'text-white',
-          icon: '⚡',
-          glow: 'shadow-yellow-200'
-        };
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       case 'low':
-        return {
-          bg: 'bg-gradient-to-r from-green-400 to-emerald-500',
-          text: 'text-white',
-          icon: '🌱',
-          glow: 'shadow-green-200'
-        };
+        return 'bg-green-50 text-green-700 border-green-200';
       default:
-        return {
-          bg: 'bg-gradient-to-r from-gray-400 to-gray-500',
-          text: 'text-white',
-          icon: '📋',
-          glow: 'shadow-gray-200'
-        };
+        return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'from-green-400 to-emerald-500';
-    if (progress >= 50) return 'from-blue-400 to-indigo-500';
-    if (progress >= 25) return 'from-yellow-400 to-orange-500';
-    return 'from-red-400 to-pink-500';
-  };
-
-  const getStatusConfig = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return { color: 'text-green-600', bg: 'bg-green-50', icon: FiTarget };
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'in_progress':
-        return { color: 'text-blue-600', bg: 'bg-blue-50', icon: FiActivity };
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'on_hold':
-        return { color: 'text-yellow-600', bg: 'bg-yellow-50', icon: FiClock };
+        return 'bg-orange-50 text-orange-700 border-orange-200';
       default:
-        return { color: 'text-gray-600', bg: 'bg-gray-50', icon: FiStar };
+        return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
@@ -75,103 +51,324 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
     if (!dateString) return 'Not set';
     return new Date(dateString).toLocaleDateString('en-US', { 
       month: 'short', 
-      day: 'numeric' 
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
-  const priorityConfig = getPriorityConfig(priority);
-  const statusConfig = getStatusConfig(status);
-  const StatusIcon = statusConfig.icon;
+  const getProgressColor = (progress: number) => {
+    if (progress >= 80) return 'from-emerald-500 to-green-500';
+    if (progress >= 60) return 'from-blue-500 to-cyan-500';
+    if (progress >= 40) return 'from-amber-500 to-yellow-500';
+    if (progress >= 20) return 'from-orange-500 to-red-500';
+    return 'from-red-500 to-pink-500';
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <FiCheckCircle className="w-4 h-4" />;
+      case 'in_progress':
+        return <FiActivity className="w-4 h-4" />;
+      case 'on_hold':
+        return <FiAlertCircle className="w-4 h-4" />;
+      default:
+        return <FiClock className="w-4 h-4" />;
+    }
+  };
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsLiked(!isLiked);
+    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+  };
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsBookmarked(!isBookmarked);
+  };
+
+  const daysRemaining = project.endDate 
+    ? Math.ceil((new Date(project.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const handleCardClick = () => {
+    router.push(`/projects/${project.id}`);
+  };
 
   return (
-    <Link href={`/projects/${id}`}>
-      <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer overflow-hidden border border-gray-100">
-        {/* Gradient overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-purple-50/0 group-hover:from-blue-50/50 group-hover:to-purple-50/50 transition-all duration-300 rounded-2xl"></div>
-        
-        {/* Priority badge */}
-        <div className="absolute top-4 right-4 z-10">
-          <div className={`${priorityConfig.bg} ${priorityConfig.text} px-3 py-1 rounded-full text-xs font-semibold shadow-lg ${priorityConfig.glow} flex items-center gap-1`}>
-            <span>{priorityConfig.icon}</span>
-            <span className="capitalize">{priority}</span>
+    <div 
+      className="group bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-blue-200 transition-all duration-300 overflow-hidden transform hover:-translate-y-1 cursor-pointer"
+      onClick={handleCardClick}
+    >
+      {/* Header with Gradient Background */}
+      <div className="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 border-b border-gray-100">
+        <div className="absolute top-4 right-4">
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              className="p-2 hover:bg-white/80 rounded-xl transition-all duration-200 backdrop-blur-sm"
+            >
+              <FiMoreVertical className="w-4 h-4 text-gray-600" />
+            </button>
+            
+            {showMenu && (
+              <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-xl py-2 z-20 min-w-[140px] backdrop-blur-sm">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit?.(project);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 flex items-center transition-colors"
+                >
+                  <FiEdit2 className="w-4 h-4 mr-3" />
+                  Edit Project
+                </button>
+                <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 flex items-center transition-colors">
+                  <FiShare2 className="w-4 h-4 mr-3" />
+                  Share
+                </button>
+                <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 flex items-center transition-colors">
+                  <FiGitBranch className="w-4 h-4 mr-3" />
+                  Clone
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="relative p-6">
-          {/* Header */}
-          <div className="mb-4">
-            <div className="flex items-start justify-between mb-2">
-              <h3 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200 pr-20">
-                {name}
-              </h3>
+        <div className="pr-12">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+              {project.name.charAt(0).toUpperCase()}
             </div>
-            
-            <div className="flex items-center gap-2 mb-3">
-              <div className={`${statusConfig.bg} ${statusConfig.color} px-2 py-1 rounded-lg flex items-center gap-1 text-xs font-medium`}>
-                <StatusIcon size={12} />
-                <span className="capitalize">{status?.replace('_', ' ')}</span>
-              </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                {project.name}
+              </h3>
+              <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                {project.description || 'No description provided'}
+              </p>
             </div>
           </div>
 
-          {/* Description */}
-          <p className="text-gray-600 text-sm mb-5 line-clamp-2 leading-relaxed">
-            {description || 'No description provided'}
-          </p>
+          {/* Status and Priority Badges */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border ${getStatusColor(project.status)}`}>
+              {getStatusIcon(project.status)}
+              {project.status.replace('_', ' ').toUpperCase()}
+            </div>
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border ${getPriorityColor(project.priority)}`}>
+              <FiFlag className="w-3 h-3" />
+              {project.priority.toUpperCase()}
+            </div>
+            {project.progress === 100 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <FiStar className="w-3 h-3" />
+                COMPLETED
+              </div>
+            )}
+          </div>
 
-          {/* Progress Section */}
-          <div className="mb-5">
+          {/* Enhanced Progress Bar */}
+          <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                <FiTrendingUp size={14} />
+              <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <FiTrendingUp className="w-4 h-4" />
                 Progress
               </span>
-              <span className="text-sm font-bold text-gray-800">{progress}%</span>
+              <span className="text-sm font-bold text-gray-900">{project.progress}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-              <div 
-                className={`bg-gradient-to-r ${getProgressColor(progress)} h-full rounded-full transition-all duration-500 shadow-sm`}
-                style={{ width: `${progress}%` }}
-              ></div>
+            <div className="relative w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div
+                className={`h-full bg-gradient-to-r ${getProgressColor(project.progress)} transition-all duration-500 ease-out relative overflow-hidden`}
+                style={{ width: `${project.progress}%` }}
+              >
+                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+              </div>
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <FiCalendar className="text-blue-600" size={14} />
+          {/* Timeline */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2 text-gray-600">
+                <FiCalendar className="w-4 h-4" />
+                <span className="font-medium">Timeline</span>
               </div>
-              <div>
-                <div className="text-xs text-gray-500">Timeline</div>
-                <div className="font-medium">{formatDate(startDate)} - {formatDate(endDate)}</div>
+              {daysRemaining !== null && (
+                <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                  daysRemaining < 0 
+                    ? 'bg-red-100 text-red-700' 
+                    : daysRemaining <= 7 
+                      ? 'bg-amber-100 text-amber-700' 
+                      : 'bg-green-100 text-green-700'
+                }`}>
+                  {daysRemaining < 0 
+                    ? `${Math.abs(daysRemaining)} days overdue` 
+                    : daysRemaining === 0 
+                      ? 'Due today' 
+                      : `${daysRemaining} days left`
+                  }
+                </div>
+              )}
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              <div className="flex justify-between">
+                <span>Start: {formatDate(project.startDate)}</span>
+                <span>End: {formatDate(project.endDate)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/projects/${project.id}`);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+            >
+              <FiEye className="w-4 h-4" />
+              View Details
+            </button>
+            
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/chat/${project.id}`);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+            >
+              <FiMessageSquare className="w-4 h-4" />
+              Chat
+            </button>
+            
+            <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 text-sm font-medium">
+              <FiUsers className="w-4 h-4" />
+              {project.members?.length || 0} Members
+            </button>
+          </div>
+
+          {/* Team Members */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <FiUsers className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-semibold text-gray-900">Team</span>
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                  {project.members?.length || 0} members
+                </span>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <div className="p-2 bg-purple-50 rounded-lg">
-                <FiUsers className="text-purple-600" size={14} />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  {project.members?.slice(0, 4).map((member, index) => (
+                    <div
+                      key={member.id}
+                      className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-sm"
+                      title={member.name}
+                    >
+                      {member.name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  ))}
+                  {(project.members?.length || 0) > 4 && (
+                    <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">
+                      +{(project.members?.length || 0) - 4}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-gray-500">Team</div>
-                <div className="font-medium">{members?.length || 0} members</div>
+              
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                  {project.owner?.name?.charAt(0).toUpperCase() || 'O'}
+                </div>
+                <div className="text-xs">
+                  <div className="font-medium text-gray-900">{project.owner?.name || 'Unknown'}</div>
+                  <div className="text-gray-500">Owner</div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Action Button */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-            <div className="text-xs text-gray-500">
-              Click to view details
+          {/* Tags */}
+          {project.tags && project.tags.length > 0 && (
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-2">
+                {project.tags.slice(0, 4).map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1.5 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 text-xs font-medium rounded-full border border-gray-300 hover:from-blue-100 hover:to-blue-200 hover:text-blue-700 transition-all cursor-pointer"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+                {project.tags.length > 4 && (
+                  <span className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full border border-gray-300">
+                    +{project.tags.length - 4} more
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-blue-600 group-hover:text-blue-700 transition-colors">
-              <span className="text-sm font-medium">View Project</span>
-              <FiArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />
+          )}
+        </div>
+
+        {/* Enhanced Footer with Interactions */}
+        <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            {/* Interaction Buttons */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleLike}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  isLiked 
+                    ? 'text-red-600 bg-red-50 border border-red-200' 
+                    : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
+                }`}
+              >
+                <FiHeart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+                <span>{likeCount}</span>
+              </button>
+              
+              <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                <FiMessageCircle className="w-4 h-4" />
+                <span>{Math.floor(Math.random() * 20) + 2}</span>
+              </button>
+              
+              <button
+                onClick={handleBookmark}
+                className={`p-1.5 rounded-lg text-sm font-medium transition-all ${
+                  isBookmarked 
+                    ? 'text-amber-600 bg-amber-50 border border-amber-200' 
+                    : 'text-gray-600 hover:text-amber-600 hover:bg-amber-50'
+                }`}
+              >
+                <FiBookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+              </button>
+            </div>
+
+            {/* Metadata */}
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-1">
+                <FiClock className="w-3 h-3" />
+                <span>Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
+              </div>
+              <span className="px-2 py-1 bg-gray-200 rounded-md font-mono">
+                #{project.id.slice(0, 8)}
+              </span>
             </div>
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

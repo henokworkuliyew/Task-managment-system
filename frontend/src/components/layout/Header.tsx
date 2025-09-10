@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -13,6 +13,8 @@ import {
 } from 'react-icons/fa';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logout } from '../../redux/slices/authSlice';
+import { fetchUnreadCount } from '../../redux/slices/notificationSlice';
+import { NotificationDropdown } from '../notifications';
 
 export default function Header() {
   const pathname = usePathname();
@@ -21,6 +23,17 @@ export default function Header() {
   const notifications = useAppSelector((state) => state.notifications);
   const unreadCount = notifications?.unreadCount || 0;
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    // Fetch unread count on component mount and periodically
+    dispatch(fetchUnreadCount());
+    
+    const interval = setInterval(() => {
+      dispatch(fetchUnreadCount());
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -37,6 +50,8 @@ export default function Header() {
         return 'Tasks';
       case '/issues':
         return 'Issues';
+      case '/calendar':
+        return 'Calendar';
       case '/notifications':
         return 'Notifications';
       case '/profile':
@@ -67,18 +82,7 @@ export default function Header() {
         {/* Header Actions */}
         <div className="flex items-center space-x-4">
           {/* Notifications */}
-          <Link
-            href="/notifications"
-            className="relative p-3 rounded-xl bg-slate-100/50 hover:bg-slate-200/50 text-slate-600 hover:text-slate-800 transition-all duration-200 group"
-          >
-            <FaBell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/10 group-hover:to-purple-500/10 transition-all duration-200"></div>
-          </Link>
+          <NotificationDropdown unreadCount={unreadCount} />
 
           {/* Profile Dropdown */}
           <div className="relative">

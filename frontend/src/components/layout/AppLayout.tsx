@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -13,11 +13,13 @@ import {
   FaBars,
   FaTimes,
   FaChevronLeft,
-  FaChevronRight
+  FaChevronRight,
+  FaCalendarAlt
 } from 'react-icons/fa';
 import { ProtectedRoute } from '../common';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logout } from '../../redux/slices/authSlice';
+import { fetchUnreadCount } from '../../redux/slices/notificationSlice';
 import Header from './Header';
 
 interface AppLayoutProps {
@@ -32,6 +34,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    // Fetch unread notification count on component mount
+    dispatch(fetchUnreadCount());
+  }, [dispatch]);
+
   const handleLogout = () => {
     dispatch(logout());
   };
@@ -41,6 +48,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     { name: 'Projects', href: '/projects', icon: FaProjectDiagram, color: 'from-purple-500 to-purple-600' },
     { name: 'Tasks', href: '/tasks', icon: FaTasks, color: 'from-green-500 to-green-600' },
     { name: 'Issues', href: '/issues', icon: FaBug, color: 'from-red-500 to-red-600' },
+    { name: 'Calendar', href: '/calendar', icon: FaCalendarAlt, color: 'from-indigo-500 to-indigo-600' },
     { name: 'Notifications', href: '/notifications', icon: FaBell, badge: unreadCount, color: 'from-yellow-500 to-yellow-600' },
   ];
 

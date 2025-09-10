@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logout } from '../../redux/slices/authSlice';
-import { FiMenu, FiX, FiHome, FiFolder, FiCheckSquare, FiAlertCircle, FiBell, FiUser, FiLogOut } from 'react-icons/fi';
+import { FiMenu, FiX, FiHome, FiFolder, FiCheckSquare, FiAlertCircle, FiBell, FiUser, FiLogOut, FiCalendar } from 'react-icons/fi';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -32,6 +32,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'Projects', href: '/projects', icon: <FiFolder className="w-5 h-5" /> },
     { name: 'Tasks', href: '/tasks', icon: <FiCheckSquare className="w-5 h-5" /> },
     { name: 'Issues', href: '/issues', icon: <FiAlertCircle className="w-5 h-5" /> },
+    { name: 'Calendar', href: '/calendar', icon: <FiCalendar className="w-5 h-5" /> },
   ];
 
   return (
