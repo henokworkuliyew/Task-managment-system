@@ -7,7 +7,7 @@ export interface CreateTaskData {
   title: string;
   description: string;
   projectId: string;
-  assignedTo?: string;
+  assigneeId?: string;
   deadline: string;
   priority: Priority;
   status: TaskStatus;
@@ -17,7 +17,7 @@ export interface UpdateTaskData {
   title?: string;
   description?: string;
   projectId?: string;
-  assignedTo?: string;
+  assigneeId?: string;
   deadline?: string;
   priority?: Priority;
   status?: TaskStatus;
@@ -87,7 +87,7 @@ export const createTask = createAsyncThunk<Task, CreateTaskData>(
         title: data.title,
         description: data.description,
         projectId: data.projectId,
-        assignedTo: data.assignedTo,
+        assigneeId: data.assigneeId,
         deadline: data.deadline,
         priority: data.priority as 'low' | 'medium' | 'high',
         status: data.status as 'todo' | 'in_progress' | 'review' | 'done'
@@ -109,7 +109,7 @@ export const updateTask = createAsyncThunk<Task, { id: string; data: UpdateTaskD
         title: data.title,
         description: data.description,
         projectId: data.projectId,
-        assignedTo: data.assignedTo,
+        assigneeId: data.assigneeId,
         deadline: data.deadline,
         priority: data.priority as 'low' | 'medium' | 'high' | undefined,
         status: data.status as 'todo' | 'in_progress' | 'review' | 'done' | undefined

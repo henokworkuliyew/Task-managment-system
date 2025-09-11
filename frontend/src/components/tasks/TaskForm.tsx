@@ -92,27 +92,38 @@ const TaskForm = ({
       if (selectedProjectId) {
         setLoadingMembers(true);
         try {
-          const foundProject = projects?.find((p: Project) => p.id === selectedProjectId);
-          if (foundProject && foundProject.members) {
-            setSelectedProject(foundProject);
-            setProjectMembers([foundProject.owner, ...foundProject.members]);
-          } else {
-            const token = localStorage.getItem('accessToken');
-            if (!token || token === 'undefined' || token === 'null') {
-              console.error('No valid access token found');
-              return;
-            }
+          // Always fetch fresh project members from the API instead of using cached project data
+          const token = localStorage.getItem('accessToken');
+          if (!token || token === 'undefined' || token === 'null') {
+            console.error('No valid access token found');
+            return;
+          }
+          
+          // Use the dedicated endpoint to get all project members
+          const response = await fetch(`/api/v1/users/project/${selectedProjectId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          if (response.ok) {
+            const members = await response.json();
+            console.log('Fetched project members:', members);
+            setProjectMembers(Array.isArray(members) ? members : []);
             
-            const response = await fetch(`/api/v1/projects/${selectedProjectId}`, {
+            // Also get project details for owner info
+            const projectResponse = await fetch(`/api/v1/projects/${selectedProjectId}`, {
               headers: {
                 'Authorization': `Bearer ${token}`,
               },
             });
-            if (response.ok) {
-              const projectData = await response.json();
+            if (projectResponse.ok) {
+              const projectData = await projectResponse.json();
               setSelectedProject(projectData);
-              setProjectMembers([projectData.owner, ...projectData.members]);
             }
+          } else {
+            console.error('Failed to fetch project members:', response.status, response.statusText);
+            setProjectMembers([]);
           }
         } catch (error) {
           console.error('Failed to fetch project members:', error);
@@ -156,7 +167,7 @@ const TaskForm = ({
           }
 
           if (values.assigneeId && values.assigneeId.trim() !== '') {
-            updateData.assignedTo = values.assigneeId;
+            updateData.assigneeId = values.assigneeId;
           }
 
           const result = await dispatch(updateTask({ id: task.id, data: updateData }));
@@ -179,7 +190,7 @@ const TaskForm = ({
           };
 
           if (values.assigneeId && values.assigneeId.trim() !== '') {
-            createData.assignedTo = values.assigneeId;
+            createData.assigneeId = values.assigneeId;
           }
 
           const result = await dispatch(createTask(createData));

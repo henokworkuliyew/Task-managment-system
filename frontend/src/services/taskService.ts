@@ -5,7 +5,7 @@ export interface CreateTaskData {
   title: string;
   description: string;
   projectId: string;
-  assignedTo?: string;
+  assigneeId?: string;
   deadline: string;
   priority: Priority;
   status: TaskStatus;

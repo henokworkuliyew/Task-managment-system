@@ -68,11 +68,11 @@ const TaskDialog = ({ isOpen, onClose, task, projectId, onSuccess }: TaskDialogP
           const members = await userService.getProjectMembers(selectedProjectId);
           setProjectMembers(members);
         } catch (error) {
-          console.error('Failed to fetch project members:', error);
           setProjectMembers([]);
         } finally {
           setLoadingMembers(false);
         }
+
       } else {
         setProjectMembers([]);
       }
@@ -247,7 +247,7 @@ const TaskDialog = ({ isOpen, onClose, task, projectId, onSuccess }: TaskDialogP
                     {user && (
                       <option value={user.id}>👤 {user.name} (You)</option>
                     )}
-                    {canAssignToOthers() && projectMembers
+                    {canAssignToOthers() && Array.isArray(projectMembers) && projectMembers
                       .filter(member => member.id !== user?.id)
                       .map((member) => (
                         <option key={member.id} value={member.id}>
