@@ -61,14 +61,19 @@ const IssueForm = ({ issue, projectId, onSuccess, onCancel }: IssueFormProps) =>
       try {
         setIsSubmitting(true);
         
+        const severityMapping: Record<string, 'low' | 'medium' | 'high' | 'critical'> = {
+          'minor': 'low',
+          'major': 'medium', 
+          'critical': 'critical'
+        };
+
+        const mappedSeverity = severityMapping[values.severity || 'minor'] || 'low';
+        
         const baseData = {
-          id: issue?.id || '',
           title: values.title || '',
           description: values.description || '',
           status: values.status as 'open' | 'in_progress' | 'resolved' | 'closed',
-          severity: (values.severity || 'minor') as 'minor' | 'major' | 'critical',
-          priority: (values.severity === 'critical' ? 'high' : 
-                    values.severity === 'major' ? 'medium' : 'low') as 'low' | 'medium' | 'high',
+          severity: mappedSeverity,
           projectId: values.projectId || '',
         };
 

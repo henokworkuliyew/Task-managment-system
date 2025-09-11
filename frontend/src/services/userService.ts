@@ -54,8 +54,8 @@ const userService = {
   },
 
   getProjectMembers: async (projectId: string) => {
-    const response = await api.get<User[]>(`/users/project/${projectId}`);
-    return response.data;
+    const response = await api.get<{success: boolean, data: User[], timestamp: string}>(`/users/project/${projectId}`);
+    return response.data.data;
   },
 };
 
