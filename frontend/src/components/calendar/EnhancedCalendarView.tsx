@@ -107,7 +107,7 @@ export default function EnhancedCalendarView() {
       priority: event.priority,
       project: event.project?.name || 'Personal',
       description: event.description || '',
-      assignee: event.createdBy.name,
+      assignee: event.createdBy?.name || 'Unknown',
       status: 'active',
       isOverdue: false,
       allDay: event.allDay,

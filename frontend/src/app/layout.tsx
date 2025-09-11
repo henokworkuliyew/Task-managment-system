@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from './providers'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { NotificationToast } from '@/components/notifications/NotificationToast'
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className={`${inter.variable} antialiased`}>
         <Providers>
           {children}
+          <NotificationToast />
           <ToastContainer 
             position="top-right" 
             autoClose={5000}
