@@ -40,7 +40,7 @@ export default function EditTaskPage() {
           priority: (taskData.priority as 'low' | 'medium' | 'high') || 'medium',
           deadline: taskData.deadline || '',
           projectId: task.project?.id || taskData.projectId || '',
-          assignedTo: taskData.assigneeId || undefined
+          assigneeId: taskData.assigneeId || undefined
         }
       })).unwrap()
       
