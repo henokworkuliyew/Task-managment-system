@@ -24,7 +24,7 @@ interface AuthenticatedSocket extends Socket {
       : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
   },
-  transports: ['polling', 'websocket'],
+  transports: process.env.NODE_ENV === 'production' ? ['polling'] : ['polling', 'websocket'],
   allowEIO3: true,
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {

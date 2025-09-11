@@ -42,20 +42,24 @@ export const useSocket = (options: UseSocketOptions) => {
     }
 
     // Extract base URL for Socket.IO connection (remove /api/v1 if present)
-    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002').replace('/api/v1', '')
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://task-managment-system-7jbd.onrender.com').replace('/api/v1', '')
+    
+    // Use only polling for production, websocket for development
+    const isProduction = baseUrl.includes('render.com') || baseUrl.includes('herokuapp.com') || baseUrl.includes('vercel.app')
+    
     // Initialize socket connection
     const socket = io(baseUrl, {
       auth: {
         token: accessToken,
       },
-      transports: ['polling', 'websocket'],
+      transports: isProduction ? ['polling'] : ['polling', 'websocket'],
       forceNew: false,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
-      upgrade: true,
+      upgrade: false,
       rememberUpgrade: false,
     })
 
