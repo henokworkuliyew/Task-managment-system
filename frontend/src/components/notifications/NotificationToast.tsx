@@ -21,9 +21,9 @@ export const NotificationToast: React.FC = () => {
   useEffect(() => {
     if (!accessToken || !user) return
 
-    const socketConnection = io(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}/chat`, {
+    const socketConnection = io(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}`, {
       auth: { token: accessToken },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
     })
 
     socketConnection.on('new-message', (message: { id: string; content: string; senderId: string; sender?: { name: string } }) => {

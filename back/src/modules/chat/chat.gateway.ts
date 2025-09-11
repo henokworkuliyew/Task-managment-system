@@ -19,10 +19,10 @@ interface AuthenticatedSocket extends Socket {
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
   },
-  namespace: '/chat',
+  transports: ['websocket', 'polling'],
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -37,11 +37,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   async handleConnection(client: AuthenticatedSocket) {
+    this.logger.log(`New connection attempt: ${client.id}`)
+    
     try {
       const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.replace('Bearer ', '')
       
       if (!token) {
         this.logger.warn(`Client ${client.id} attempted to connect without token`)
+        client.emit('error', { message: 'Authentication required' })
         client.disconnect()
         return
       }
@@ -57,8 +60,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Join user to their own room for direct messages
       client.join(`user:${client.userId}`)
       
+      // Send connection success
+      client.emit('connected', { userId: client.userId })
+      
     } catch (error) {
       this.logger.error(`Authentication failed for socket ${client.id}:`, error.message)
+      client.emit('error', { message: 'Authentication failed' })
       client.disconnect()
     }
   }

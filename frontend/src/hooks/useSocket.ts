@@ -30,17 +30,32 @@ export const useSocket = (options: UseSocketOptions) => {
   const { accessToken, user } = useSelector((state: RootState) => state.auth)
 
   useEffect(() => {
-    if (!accessToken || !user) return
+    if (!accessToken || !user) {
+      return
+    }
 
+    // Cleanup existing socket before creating new one
+    if (socketRef.current) {
+      socketRef.current.removeAllListeners()
+      socketRef.current.disconnect()
+      socketRef.current = null
+    }
+
+    // Extract base URL for Socket.IO connection (remove /api/v1 if present)
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002').replace('/api/v1', '')
     // Initialize socket connection
-    const socket = io(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}/chat`, {
+    const socket = io(baseUrl, {
       auth: {
         token: accessToken,
       },
-      transports: ['websocket'],
-      forceNew: true,
+      transports: ['websocket', 'polling'],
+      forceNew: false,
       reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
       timeout: 20000,
+      upgrade: true,
     })
 
     socketRef.current = socket
@@ -49,7 +64,11 @@ export const useSocket = (options: UseSocketOptions) => {
     socket.on('connect', () => {
       setIsConnected(true)
       console.log('Connected to chat server')
-      // Join project room immediately after connection
+    })
+
+    socket.on('connected', (data) => {
+      console.log('Socket authenticated:', data)
+      // Join project room after authentication
       if (projectId) {
         socket.emit('join-project', { projectId })
       }
@@ -60,13 +79,13 @@ export const useSocket = (options: UseSocketOptions) => {
       console.log('Disconnected from chat server')
     })
 
-    socket.on('error', (error) => {
-      console.error('Socket error:', error)
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error)
       setIsConnected(false)
     })
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error)
+    socket.on('error', (error) => {
+      console.error('Socket error:', error)
       setIsConnected(false)
     })
 
@@ -101,18 +120,14 @@ export const useSocket = (options: UseSocketOptions) => {
       onUserTyping?.(data)
     })
 
-    // Join project room if projectId is provided
-    if (projectId) {
-      socket.emit('join-project', { projectId })
-    }
-
     return () => {
-      if (projectId) {
-        socket.emit('leave-project', { projectId })
+      if (socketRef.current) {
+        socketRef.current.removeAllListeners()
+        socketRef.current.disconnect()
+        socketRef.current = null
       }
-      socket.disconnect()
     }
-  }, [accessToken, user, projectId, onNewMessage, onUserJoined, onUserLeft, onUserTyping])
+  }, [accessToken, user, projectId])
 
   const sendMessage = (content: string, type: string = 'text') => {
     if (socketRef.current && projectId) {
