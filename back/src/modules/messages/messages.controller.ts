@@ -27,10 +27,30 @@ export class MessagesController {
   @Post()
   @ApiOperation({ summary: 'Send a message to project chat' })
   async create(
-    @Body(ValidationPipe) createMessageDto: CreateMessageDto,
+    @Body() body: any,
     @Request() req: any,
   ): Promise<Message> {
-    return this.messagesService.create(createMessageDto, req.user.id)
+    const content = body.messageData?.content || body.content
+    
+    if (!content) {
+      throw new Error('Message content is required')
+    }
+    
+    const createMessageDto: CreateMessageDto = {
+      content: content,
+      type: body.messageData?.type || body.type || 'text',
+      attachments: body.messageData?.attachments || body.attachments || [],
+      projectId: body.projectId
+    }
+    
+    const message = await this.messagesService.create(createMessageDto, req.user.id)
+    
+    const io = req.app.get('socketio')
+    if (io) {
+      io.to(`project:${createMessageDto.projectId}`).emit('new-message', message)
+    }
+    
+    return message
   }
 
   @Get('project/:projectId')

@@ -7,12 +7,15 @@ import { AppModule } from "./app.module"
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter"
 import { LoggingInterceptor } from "./common/interceptors/logging.interceptor"
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor"
+import { IoAdapter } from '@nestjs/platform-socket.io'
 async function bootstrap() {
   console.log("Starting Task Manager API...")
   const app = await NestFactory.create(AppModule)
   const configService = app.get(ConfigService)
   console.log('Environment:', configService.get('NODE_ENV'))
 
+  // Setup Socket.IO adapter
+  app.useWebSocketAdapter(new IoAdapter(app))
   
   // Security middleware
   app.use(helmet())

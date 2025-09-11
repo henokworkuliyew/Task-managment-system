@@ -38,7 +38,15 @@ export class MessagesService {
       attachments: createMessageDto.attachments || [],
     })
 
-    return await this.messageRepository.save(message)
+    const savedMessage = await this.messageRepository.save(message)
+    
+    // Get the full message with sender info for broadcasting
+    const fullMessage = await this.messageRepository.findOne({
+      where: { id: savedMessage.id },
+      relations: ['sender'],
+    })
+
+    return fullMessage
   }
 
   async findByProject(projectId: string, userId: string, page: number = 1, limit: number = 50): Promise<{
