@@ -31,6 +31,12 @@ export class UsersController {
     return this.usersService.findAll(paginationDto)
   }
 
+  @Get('project/:projectId')
+  @ApiOperation({ summary: 'Get users by project ID' })
+  getUsersByProject(@Param('projectId') projectId: string) {
+    return this.usersService.getUsersByProject(projectId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
   findOne(@Param('id') id: string) {
