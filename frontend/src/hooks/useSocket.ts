@@ -48,7 +48,7 @@ export const useSocket = (options: UseSocketOptions) => {
       auth: {
         token: accessToken,
       },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       forceNew: false,
       reconnection: true,
       reconnectionAttempts: 5,
@@ -56,6 +56,7 @@ export const useSocket = (options: UseSocketOptions) => {
       reconnectionDelayMax: 5000,
       timeout: 20000,
       upgrade: true,
+      rememberUpgrade: false,
     })
 
     socketRef.current = socket

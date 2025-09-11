@@ -36,9 +36,11 @@ async function bootstrap() {
   app.enableCors({
     origin:
       process.env.NODE_ENV === 'production'
-        ? [configService.get<string>('FRONTEND_URL')]
+        ? [configService.get<string>('FRONTEND_URL'), 'https://task-managment-system-7jbd.onrender.com']
         : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 
   app.useGlobalFilters(new GlobalExceptionFilter())
