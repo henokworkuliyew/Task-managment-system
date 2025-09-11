@@ -20,6 +20,7 @@ interface UseSocketOptions {
   onUserTyping?: (data: { userId: string; isTyping: boolean }) => void
 }
 
+
 export const useSocket = (options: UseSocketOptions) => {
   const { projectId, onNewMessage, onUserJoined, onUserLeft, onUserTyping } = options
   const socketRef = useRef<Socket | null>(null)
@@ -32,7 +33,7 @@ export const useSocket = (options: UseSocketOptions) => {
     if (!accessToken || !user) return
 
     // Initialize socket connection
-    const socket = io(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/chat`, {
+    const socket = io(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}/chat`, {
       auth: {
         token: accessToken,
       },
@@ -48,6 +49,10 @@ export const useSocket = (options: UseSocketOptions) => {
     socket.on('connect', () => {
       setIsConnected(true)
       console.log('Connected to chat server')
+      // Join project room immediately after connection
+      if (projectId) {
+        socket.emit('join-project', { projectId })
+      }
     })
 
     socket.on('disconnect', () => {
