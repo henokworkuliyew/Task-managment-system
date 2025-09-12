@@ -57,16 +57,25 @@ export default function NotificationDropdown({ unreadCount }: NotificationDropdo
 
   const handleMarkAsRead = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    dispatch(markAsRead(id));
+    dispatch(markAsRead(id)).then(() => {
+      // Refresh unread count after marking as read
+      dispatch(fetchUnreadCount());
+    });
   };
 
   const handleMarkAllAsRead = () => {
-    dispatch(markAllAsRead());
+    dispatch(markAllAsRead()).then(() => {
+      // Refresh unread count after marking all as read
+      dispatch(fetchUnreadCount());
+    });
   };
 
   const handleDeleteNotification = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    dispatch(deleteNotification(id));
+    dispatch(deleteNotification(id)).then(() => {
+      // Refresh unread count after deleting notification
+      dispatch(fetchUnreadCount());
+    });
   };
 
   const getNotificationIcon = (type: string) => {
