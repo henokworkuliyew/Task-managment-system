@@ -4,12 +4,12 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 
 interface Message {
-  id: string;
-  content: string;
-  senderId: string;
-  projectId: string;
-  createdAt: string;
-  type: string;
+  id: string
+  content: string
+  senderId: string
+  projectId: string
+  createdAt: string
+  type: string
 }
 
 interface UseSocketOptions {
@@ -20,52 +20,42 @@ interface UseSocketOptions {
   onUserTyping?: (data: { userId: string; isTyping: boolean }) => void
 }
 
-
 export const useSocket = (options: UseSocketOptions) => {
-  const { projectId, onNewMessage, onUserJoined, onUserLeft, onUserTyping } = options
+  const { projectId, onNewMessage, onUserJoined, onUserLeft, onUserTyping } =
+    options
   const socketRef = useRef<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
-  
+
   const { accessToken, user } = useSelector((state: RootState) => state.auth)
 
   useEffect(() => {
-    if (!accessToken || !user) {
-      return
-    }
+    if (!accessToken || !user) return
 
-    // Cleanup existing socket before creating new one
     if (socketRef.current) {
       socketRef.current.removeAllListeners()
       socketRef.current.disconnect()
       socketRef.current = null
     }
 
-    // Extract base URL for Socket.IO connection (remove /api/v1 if present)
-    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://task-managment-system-7jbd.onrender.com').replace('/api/v1', '')
-    
-    // Use only polling for production, websocket for development
-    const isProduction = baseUrl.includes('render.com') || baseUrl.includes('herokuapp.com') || baseUrl.includes('vercel.app')
-    
-    // Initialize socket connection
+    const baseUrl = (
+      process.env.NEXT_PUBLIC_API_URL ||
+      'https://task-managment-system-7jbd.onrender.com'
+    ).replace('/api/v1', '')
+
     const socket = io(baseUrl, {
-      auth: {
-        token: accessToken,
-      },
-      transports: isProduction ? ['polling'] : ['polling', 'websocket'],
-      forceNew: false,
+      auth: { token: accessToken },
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
-      upgrade: false,
-      rememberUpgrade: false,
     })
 
     socketRef.current = socket
 
-    // Connection handlers
     socket.on('connect', () => {
       setIsConnected(true)
       console.log('Connected to chat server')
@@ -73,10 +63,7 @@ export const useSocket = (options: UseSocketOptions) => {
 
     socket.on('connected', (data) => {
       console.log('Socket authenticated:', data)
-      // Join project room after authentication
-      if (projectId) {
-        socket.emit('join-project', { projectId })
-      }
+      if (projectId) socket.emit('join-project', { projectId })
     })
 
     socket.on('disconnect', () => {
@@ -99,27 +86,14 @@ export const useSocket = (options: UseSocketOptions) => {
       setIsConnected(true)
     })
 
-    // Message handlers
-    socket.on('new-message', (message) => {
-      onNewMessage?.(message)
-    })
-
-    socket.on('user-joined', (data) => {
-      onUserJoined?.(data)
-    })
-
-    socket.on('user-left', (data) => {
-      onUserLeft?.(data)
-    })
+    socket.on('new-message', (message) => onNewMessage?.(message))
+    socket.on('user-joined', (data) => onUserJoined?.(data))
+    socket.on('user-left', (data) => onUserLeft?.(data))
 
     socket.on('user-typing', (data) => {
-      setTypingUsers(prev => {
+      setTypingUsers((prev) => {
         const newSet = new Set(prev)
-        if (data.isTyping) {
-          newSet.add(data.userId)
-        } else {
-          newSet.delete(data.userId)
-        }
+        data.isTyping ? newSet.add(data.userId) : newSet.delete(data.userId)
         return newSet
       })
       onUserTyping?.(data)
@@ -135,38 +109,17 @@ export const useSocket = (options: UseSocketOptions) => {
   }, [accessToken, user, projectId])
 
   const sendMessage = (content: string, type: string = 'text') => {
-    if (socketRef.current && projectId) {
-      socketRef.current.emit('send-message', {
-        projectId,
-        content,
-        type,
-      })
-    }
+    socketRef.current?.emit('send-message', { projectId, content, type })
   }
 
-  const startTyping = () => {
-    if (socketRef.current && projectId) {
-      socketRef.current.emit('typing-start', { projectId })
-    }
-  }
+  const startTyping = () =>
+    socketRef.current?.emit('typing-start', { projectId })
+  const stopTyping = () => socketRef.current?.emit('typing-stop', { projectId })
 
-  const stopTyping = () => {
-    if (socketRef.current && projectId) {
-      socketRef.current.emit('typing-stop', { projectId })
-    }
-  }
-
-  const joinProject = (newProjectId: string) => {
-    if (socketRef.current) {
-      socketRef.current.emit('join-project', { projectId: newProjectId })
-    }
-  }
-
-  const leaveProject = (oldProjectId: string) => {
-    if (socketRef.current) {
-      socketRef.current.emit('leave-project', { projectId: oldProjectId })
-    }
-  }
+  const joinProject = (newProjectId: string) =>
+    socketRef.current?.emit('join-project', { projectId: newProjectId })
+  const leaveProject = (oldProjectId: string) =>
+    socketRef.current?.emit('leave-project', { projectId: oldProjectId })
 
   return {
     socket: socketRef.current,
