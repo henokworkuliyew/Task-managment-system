@@ -25,14 +25,8 @@ export default function Header() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch unread count on component mount and periodically
+    // Fetch unread count on component mount only
     dispatch(fetchUnreadCount());
-    
-    const interval = setInterval(() => {
-      dispatch(fetchUnreadCount());
-    }, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(interval);
   }, [dispatch]);
 
   const handleLogout = () => {

@@ -31,8 +31,14 @@ function AcceptInvitationContent() {
     }
 
     // Verify invitation token
-    fetch(`/api/v1/invitations/verify/${token}`)
-      .then(res => res.json())
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://task-managment-system-7jbd.onrender.com/api/v1';
+    fetch(`${API_URL}/invitations/verify/${token}`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
       .then(data => {
         if (data.error) {
           setError(data.error);
@@ -40,7 +46,8 @@ function AcceptInvitationContent() {
           setInvitation(data);
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Invitation verification error:', error);
         setError('Failed to verify invitation');
       })
       .finally(() => {
@@ -53,7 +60,8 @@ function AcceptInvitationContent() {
     
     setAccepting(true);
     try {
-      const response = await fetch(`/api/v1/invitations/accept?token=${token}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://task-managment-system-7jbd.onrender.com/api/v1';
+      const response = await fetch(`${API_URL}/invitations/accept?token=${token}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
@@ -83,7 +91,8 @@ function AcceptInvitationContent() {
     if (!token) return;
     
     try {
-      const response = await fetch(`/api/v1/invitations/decline?token=${token}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://task-managment-system-7jbd.onrender.com/api/v1';
+      const response = await fetch(`${API_URL}/invitations/decline?token=${token}`, {
         method: 'GET',
       });
       

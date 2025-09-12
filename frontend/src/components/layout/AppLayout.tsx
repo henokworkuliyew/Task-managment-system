@@ -35,7 +35,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch unread notification count on component mount
+    // Fetch unread notification count on component mount only
     dispatch(fetchUnreadCount());
   }, [dispatch]);
 
