@@ -109,6 +109,11 @@ const messageSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    addMessage: (state, action: PayloadAction<Message>) => {
+      // Add new message to the end of the array (most recent)
+      state.messages.push(action.payload)
+      state.totalCount += 1
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -153,5 +158,5 @@ const messageSlice = createSlice({
   },
 })
 
-export const { clearMessages, clearError } = messageSlice.actions
+export const { clearMessages, clearError, addMessage } = messageSlice.actions
 export default messageSlice.reducer

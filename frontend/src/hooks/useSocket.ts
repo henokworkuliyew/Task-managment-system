@@ -2,15 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-
-interface Message {
-  id: string
-  content: string
-  senderId: string
-  projectId: string
-  createdAt: string
-  type: string
-}
+import { Message } from '@/types/message'
 
 interface UseSocketOptions {
   projectId: string

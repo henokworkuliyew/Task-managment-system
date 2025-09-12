@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import { useAppDispatch } from '@/redux/hooks'
 import { fetchProjectById } from '@/redux/slices/projectSlice'
-import { sendMessage } from '@/redux/slices/messageSlice'
+import { sendMessage, fetchProjectMessages, addMessage } from '@/redux/slices/messageSlice'
 import { useSocket } from '@/hooks/useSocket'
 import { Message } from '@/types/message'
 import { FiSend, FiArrowLeft, FiUsers } from 'react-icons/fi'
@@ -32,8 +32,7 @@ export default function ChatPage() {
     projectId,
     onNewMessage: (message) => {
       // Add new message to Redux state
-      // Add new message to Redux state
-      // dispatch({ type: 'messages/addMessage', payload: message })
+      dispatch(addMessage(message))
     },
     onUserJoined: (data) => {
       setOnlineUsers(prev => new Set([...prev, data.userId]))
@@ -50,6 +49,8 @@ export default function ChatPage() {
   useEffect(() => {
     if (projectId) {
       dispatch(fetchProjectById(projectId))
+      // Fetch existing messages
+      dispatch(fetchProjectMessages({ projectId, params: { page: 1, limit: 50 } }))
     }
 
     return () => {
@@ -66,22 +67,29 @@ export default function ChatPage() {
   }
 
   const handleSendMessage = async () => {
-    const content = messageText;
-    if (!content.trim() || !projectId) return
+    const content = messageText.trim();
+    if (!content || !projectId) return
+
+    // Clear the input immediately for better UX
+    setMessageText('')
 
     const messageData = {
       content,
       projectId,
-      senderId: user?.id || ''
+      type: 'text'
     }
 
     if (isConnected && socket) {
+      // Send via Socket.IO
       socket.emit('send-message', messageData)
     } else {
+      // Fallback to REST API
       try {
         await dispatch(sendMessage({ projectId, content, type: 'text' })).unwrap()
       } catch (error) {
         console.error('Failed to send message:', error)
+        // Restore message text on error
+        setMessageText(content)
       }
     }
   }
@@ -260,7 +268,7 @@ export default function ChatPage() {
                 </div>
               )}
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); setMessageText(''); }} className="flex space-x-2">
+            <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex space-x-2">
               <input
                 type="text"
                 value={messageText}
