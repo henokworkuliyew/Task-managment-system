@@ -31,6 +31,7 @@ export const databaseConfig = (
   const commonConfig = {
     entities: [
       User,
+      PendingRegistration,
       Project,
       ProjectInvitation,
       Task,

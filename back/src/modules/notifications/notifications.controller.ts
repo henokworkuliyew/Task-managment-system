@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Patch,
+  Delete,
   Param,
   UseGuards,
   Request,
@@ -39,5 +40,17 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Mark all notifications as read' })
   markAllAsRead(@Request() req) {
     return this.notificationsService.markAllAsRead(req.user.id)
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete notification' })
+  deleteNotification(@Param('id') id: string, @Request() req) {
+    return this.notificationsService.deleteNotification(id, req.user.id)
+  }
+
+  @Delete()
+  @ApiOperation({ summary: 'Delete all notifications' })
+  deleteAllNotifications(@Request() req) {
+    return this.notificationsService.deleteAllNotifications(req.user.id)
   }
 }

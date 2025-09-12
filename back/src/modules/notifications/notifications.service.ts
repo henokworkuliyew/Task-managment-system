@@ -48,16 +48,22 @@ export class NotificationsService {
   }
 
   async markAsRead(id: string, userId: string): Promise<NotificationLog> {
+    console.log(`NotificationService: Marking notification ${id} as read for user ${userId}`)
+    
     const notification = await this.notificationRepository.findOne({
       where: { id, userId },
     })
 
     if (!notification) {
+      console.log(`NotificationService: Notification ${id} not found for user ${userId}`)
       throw new NotFoundException(`Notification with ID ${id} not found`)
     }
 
+    console.log(`NotificationService: Found notification, current read status: ${notification.read}`)
     notification.read = true
-    return this.notificationRepository.save(notification)
+    const savedNotification = await this.notificationRepository.save(notification)
+    console.log(`NotificationService: Notification ${id} marked as read successfully`)
+    return savedNotification
   }
 
   async markAllAsRead(userId: string): Promise<void> {
@@ -68,10 +74,28 @@ export class NotificationsService {
   }
 
   async getUnreadCount(userId: string): Promise<{ count: number }> {
+    console.log(`NotificationService: Getting unread count for user ${userId}`)
     const count = await this.notificationRepository.count({
       where: { userId, read: false },
     })
+    console.log(`NotificationService: Found ${count} unread notifications for user ${userId}`)
 
     return { count }
+  }
+
+  async deleteNotification(id: string, userId: string): Promise<void> {
+    const notification = await this.notificationRepository.findOne({
+      where: { id, userId },
+    })
+
+    if (!notification) {
+      throw new NotFoundException(`Notification with ID ${id} not found`)
+    }
+
+    await this.notificationRepository.remove(notification)
+  }
+
+  async deleteAllNotifications(userId: string): Promise<void> {
+    await this.notificationRepository.delete({ userId })
   }
 }

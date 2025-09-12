@@ -55,12 +55,18 @@ export default function NotificationDropdown({ unreadCount }: NotificationDropdo
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleMarkAsRead = (id: string, event: React.MouseEvent) => {
+  const handleMarkAsRead = async (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    dispatch(markAsRead(id)).then(() => {
+    console.log('Marking notification as read:', id);
+    try {
+      const result = await dispatch(markAsRead(id)).unwrap();
+      console.log('Mark as read result:', result);
       // Refresh unread count after marking as read
-      dispatch(fetchUnreadCount());
-    });
+      await dispatch(fetchUnreadCount()).unwrap();
+      console.log('Unread count refreshed');
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
   };
 
   const handleMarkAllAsRead = () => {

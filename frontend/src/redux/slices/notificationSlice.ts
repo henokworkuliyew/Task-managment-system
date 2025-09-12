@@ -41,9 +41,16 @@ export const fetchUnreadCount = createAsyncThunk(
   'notifications/fetchUnreadCount',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('Redux fetchUnreadCount: Starting API call');
       const response = await notificationService.getUnreadCount();
-      return response.count;
+      console.log('Redux fetchUnreadCount: API response:', response);
+      // Handle different response structures and ensure we always return a number
+      if (typeof response === 'object' && response !== null && 'count' in response) {
+        return typeof response.count === 'number' ? response.count : 0;
+      }
+      return 0;
     } catch (error: unknown) {
+      console.error('Redux fetchUnreadCount: Error occurred:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch unread count';
       return rejectWithValue(errorMessage);
     }
@@ -54,9 +61,12 @@ export const markAsRead = createAsyncThunk(
   'notifications/markAsRead',
   async (id: string, { rejectWithValue }) => {
     try {
-      await notificationService.markAsRead(id);
+      console.log('Redux markAsRead: Starting for notification ID:', id);
+      const result = await notificationService.markAsRead(id);
+      console.log('Redux markAsRead: Service call successful:', result);
       return id;
     } catch (error: unknown) {
+      console.error('Redux markAsRead: Error occurred:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to mark notification as read';
       return rejectWithValue(errorMessage);
     }
@@ -125,7 +135,10 @@ const notificationSlice = createSlice({
       state.error = null;
     });
     builder.addCase(fetchUnreadCount.fulfilled, (state, action: PayloadAction<number>) => {
+      console.log('Redux fetchUnreadCount.fulfilled: Previous unread count:', state.unreadCount);
+      console.log('Redux fetchUnreadCount.fulfilled: New unread count:', action.payload);
       state.unreadCount = action.payload;
+      console.log('Redux fetchUnreadCount.fulfilled: State updated to:', state.unreadCount);
     });
     builder.addCase(fetchUnreadCount.rejected, (state, action) => {
       state.error = action.payload as string;
@@ -136,10 +149,20 @@ const notificationSlice = createSlice({
       state.error = null;
     });
     builder.addCase(markAsRead.fulfilled, (state, action: PayloadAction<string>) => {
+      console.log('Redux markAsRead.fulfilled: Notification ID:', action.payload);
+      console.log('Redux markAsRead.fulfilled: Current unread count:', state.unreadCount);
       const notification = state.notifications.find(n => n.id === action.payload);
-      if (notification && !notification.read) {
-        notification.read = true;
-        state.unreadCount = Math.max(0, state.unreadCount - 1);
+      if (notification) {
+        console.log('Redux markAsRead.fulfilled: Found notification, current read status:', notification.read);
+        if (!notification.read) {
+          notification.read = true;
+          state.unreadCount = Math.max(0, state.unreadCount - 1);
+          console.log('Redux markAsRead.fulfilled: Updated unread count to:', state.unreadCount);
+        } else {
+          console.log('Redux markAsRead.fulfilled: Notification was already read');
+        }
+      } else {
+        console.log('Redux markAsRead.fulfilled: Notification not found in state');
       }
     });
     builder.addCase(markAsRead.rejected, (state, action) => {
