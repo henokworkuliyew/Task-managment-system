@@ -26,7 +26,7 @@ export class CreateUserDto {
   @IsOptional()
   avatar?: string
 
-  @ApiPropertyOptional({ example: "Full-stack developer with 5 years experience" })
+  @ApiPropertyOptional({ example: "I am Henok Full-stack developer with 5 years experience" })
   @IsString()
   @IsOptional()
   bio?: string

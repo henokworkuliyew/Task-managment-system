@@ -12,9 +12,9 @@ import {
   ParseUUIDPipe,
   ValidationPipe,
 } from '@nestjs/common'
-import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CalendarService, CreateEventDto, UpdateEventDto, EventFilters } from './calendar.service'
-import { CalendarEvent, EventType, EventPriority, EventVisibility } from '../entities/calendar-event.entity'
+import { CalendarEvent, EventType, EventPriority, EventVisibility } from '../../entities/calendar-event.entity'
 
 @Controller('calendar')
 @UseGuards(JwtAuthGuard)
